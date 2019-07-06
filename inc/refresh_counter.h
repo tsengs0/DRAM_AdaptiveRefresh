@@ -6,10 +6,18 @@
 #define REFRESH_COUNT 8192
 #define ROW_GP_NUM (ROW_NUM / REFRESH_COUNT) // the number of rows in one refresh cycle
 
-// Refer to Micron DDR3L-800 (operating frequency: 800 MHz)
-#define tREFW 64000000 // 64000000 ns = 64000 us = 64 ms
-#define tREFI 7812.5 // 7812.5 ns = 7.812 us
-#define tRFC 260 // 260 ns
+#define DDR3_1333x4Gb
+// Refer to Micron DDR3L-1333 (operating frequency: 1333 MHz)
+#ifdef DDR3_1333x4Gb
+	#define tREFW 64000000 // 64000000 ns = 64000 us = 64 ms
+	#define tREFI 7812.5 // 7812.5 ns = 7.812 us
+	#define tRFC 260 // 260 ns
+#elif DDR3_1333x8Gb
+	#define ROW_NUM 1
+#else
+	
+#endif
+
 
 typedef unsigned int Row_t;
 typedef unsigned char RowGroup_t; // only last 3-bit are valid
