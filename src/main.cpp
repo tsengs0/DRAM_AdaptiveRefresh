@@ -7,8 +7,11 @@ double RefreshInterval = (double) (tREFW / PARTITION_NUM);
 
 int main(int argc, char **argv)
 {
-	
-	RefreshCounter ddr3_refresh(RefreshInterval);
+	if(argc != 2) {
+		std::cout << "Please give the filename of access patterns" << std::endl;
+		exit(1);
+	}
+	RefreshCounter ddr3_refresh(RefreshInterval, argv[1]);
 	ddr3_refresh.run_RefreshSim();
 
 	return 0;

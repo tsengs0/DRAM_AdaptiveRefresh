@@ -1,25 +1,38 @@
-#include "../inc/refresh_counter.h"
+#include "../inc/file_config.h"
+
 using namespace std;
 
 enum {
+	
+
 	REQUEST_TYPE  = 0, // Column 1 in .CSV File => Access type (WR or RD)
 	REQUEST_SIZE  = 1, // Column 2 in .CSV File => Request Size of transaction (in unit of BYTE)
-	TARGET_RG     = 2, // Column 3 in .CSV File => Target row group
+	TARGET_RG    = 2, // Column 3 in .CSV File => Target row group
 	REQUEST_TIME  = 3  // Column 4 in .CSV File => The access timing
 };
 
+#define FileFirstIndex 40
+#define FileIndexDuration 5
 
-void RefreshCounter::config_access_pattern(char *read_filename)
-{
+int main(int argc, char **argv){
 	string str;
+	vector<string> request_type; 
+	vector<int> request_size, target_rg;
+	vector<double> request_time;
 	short state; 
  
 	char filename[100], output_FileName[100];
 
+	if(argc != 2) {
+		cout << "Please pass filename of access pattern" << endl;
+		exit(1);
+	}
 
-	cout << "Reading " << read_filename << endl;
+
+	sprintf(filename,"%s", argv[1]);
+	cout << "Reading " << filename << endl;
 	// Reading the file
-	ifstream ifs(read_filename);
+	ifstream ifs(filename);
  	if(!ifs){
 		cout<<"Read File Error";
 		exit(1);
@@ -70,4 +83,6 @@ void RefreshCounter::config_access_pattern(char *read_filename)
 	    << miss_dline << endl;
 	*/
 	ifs.close();
+    
+	return 0;
 }

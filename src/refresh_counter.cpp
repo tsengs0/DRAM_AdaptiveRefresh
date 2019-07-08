@@ -9,7 +9,7 @@ using std::endl;
 
 double	round_length = (double) tREFW;
 
-RefreshCounter::RefreshCounter(double &time_val)
+RefreshCounter::RefreshCounter(double &time_val, char *read_filename)
                : RetentionTimer(time_val) // Initialisation list
 {
 	for(int i = 0; i < (int) BANK_NUM; i++) {
@@ -20,6 +20,9 @@ RefreshCounter::RefreshCounter(double &time_val)
 	// Since the simulator is designed to be run for certain number of refresh windows (hper-period).
 	// Thus, a counter to record the currently elapsed refresh window is necessary.
 	HyperPeriod_cnt = (int) 1;
+
+	// Configuring the access patterns
+	config_access_pattern(read_filename);
 }
 
 // Initialising the value of all rows of any bank, with random value

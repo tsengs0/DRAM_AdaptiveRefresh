@@ -1,6 +1,12 @@
 #ifndef __REFRESH_COUNTER_H
 #define __REFRESH_COUNTER_H
 
+#include<iostream> 
+#include<fstream> 
+#include<string>
+#include<sstream>
+#include<vector>
+
 #define BANK_NUM 8
 #define ROW_NUM 32768
 #define REFRESH_COUNT 8192
@@ -57,17 +63,22 @@ class RetentionTimer {
 
 class RefreshCounter : public RetentionTimer {
 	private:
+		// For access pattern
+		std::vector<std::string> request_type; 
+		std::vector<int> request_size, target_rg;
+		std::vector<double> request_time;
+		
 		struct Bank_t bank[BANK_NUM];	
 		int HyperPeriod_cnt;
 		
 	public:
-		RefreshCounter(double &time_val);
+		RefreshCounter(double &time_val, char *read_filename);
 		//~RefreshCounter(void);
 		void bank_init(int bank_id);
 		void view_bank(int bank_id);
 		void update_row_group(int bank_id, int group_id, UpdateOp operation);
 		void refresh_row_group(int bank_id, int group_id);
-
+		void config_access_pattern(char *read_filename);
 		void run_RefreshSim(void);
 };
 
