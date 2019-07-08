@@ -6,7 +6,7 @@ RefreshCounter::RefreshCounter(void)
 {
 	for(int i = 0; i < (int) BANK_NUM; i++) {
 		bank_init(i);
-		view_bank(i);
+		//view_bank(i);
 	}
 }
 
@@ -32,15 +32,15 @@ void RefreshCounter::view_bank(int bank_id)
 	std::cout << "=================================" << std::endl;
 }
 
-void update_row_group(int bank_id, int group_id, UpdateOP operation)
+void RefreshCounter::update_row_group(int bank_id, int group_id, UpdateOp operation)
 {
-	if(operation = (UpdateOP) INC)
+	if(operation = (UpdateOp) INC)
 		bank[bank_id].access[group_id] += 0x01;
-	else // (UpdateOP) DEC
+	else // (UpdateOp) DEC
 		bank[bank_id].access[group_id] -= 0x01;
 }
 
-void refresh_row_group(int bank_id, int group_id)
+void RefreshCounter::refresh_row_group(int bank_id, int group_id)
 {
-	
+	bank[bank_id].access[group_id] += 0x02;	
 }

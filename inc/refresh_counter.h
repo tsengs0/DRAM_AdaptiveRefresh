@@ -4,8 +4,11 @@
 #define BANK_NUM 8
 #define ROW_NUM 32768
 #define REFRESH_COUNT 8192
+#define RG_PER_BANK REFRESH_COUNT
 #define ROW_GP_NUM (ROW_NUM / REFRESH_COUNT) // the number of rows in one refresh cycle
-
+#define PARTITION_NUM 8
+#define PARTITION_RG_NUM ((RG_PER_BANK * BANK_NUM) / PARTITION_NUM)
+ 
 #define DDR3_1333x4Gb
 // Refer to Micron DDR3L-1333 (operating frequency: 1333 MHz)
 #ifdef DDR3_1333x4Gb
@@ -46,7 +49,7 @@ class RefreshCounter {
 		//~RefreshCounter(void);
 		void bank_init(int bank_id);
 		void view_bank(int bank_id);
-		void update_row_group(int bank_id, int group_id);
+		void update_row_group(int bank_id, int group_id, UpdateOp operation);
 		void refresh_row_group(int bank_id, int group_id);
 };
 
