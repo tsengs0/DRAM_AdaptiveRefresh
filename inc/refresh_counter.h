@@ -23,7 +23,7 @@
 
 
 // Configuration for simulation
-#define HYPER_PERIOD 5
+#define HYPER_PERIOD 3
 
 typedef unsigned int Row_t;
 typedef unsigned char RowGroup_t; // only last 3-bit are valid
