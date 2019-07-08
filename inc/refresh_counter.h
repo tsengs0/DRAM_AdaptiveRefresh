@@ -8,7 +8,7 @@
 #define ROW_GP_NUM (ROW_NUM / REFRESH_COUNT) // the number of rows in one refresh cycle
 #define PARTITION_NUM 8
 #define PARTITION_RG_NUM ((RG_PER_BANK * BANK_NUM) / PARTITION_NUM)
- 
+
 #define DDR3_1333x4Gb
 // Refer to Micron DDR3L-1333 (operating frequency: 1333 MHz)
 #ifdef DDR3_1333x4Gb
@@ -21,6 +21,9 @@
 	
 #endif
 
+
+// Configuration for simulation
+#define HYPER_PERIOD 5
 
 typedef unsigned int Row_t;
 typedef unsigned char RowGroup_t; // only last 3-bit are valid
@@ -39,20 +42,34 @@ struct Bank_t {
 	RowGroup_t access[ROW_GP_NUM]; 
 };
 
-class RefreshCounter {
+class RetentionTimer {
+	private:
+		double time_interval; // the time interval of the timer
+		double round_time;
+	public:
+		//~RetentionTimer();
+		RetentionTimer(double &time_val);
+
+		double time_unit_config(double &time_val);
+		double time_update(void); 
+		
+};
+
+class RefreshCounter : public RetentionTimer {
 	private:
 		struct Bank_t bank[BANK_NUM];	
-		
+		int HyperPeriod_cnt;
 		
 	public:
-		RefreshCounter(void);
+		RefreshCounter(double &time_val);
 		//~RefreshCounter(void);
 		void bank_init(int bank_id);
 		void view_bank(int bank_id);
 		void update_row_group(int bank_id, int group_id, UpdateOp operation);
 		void refresh_row_group(int bank_id, int group_id);
-};
 
+		void run_RefreshSim(void);
+};
 
 
 #endif // __REFRESH_COUNTER_H

@@ -3,14 +3,13 @@
 #include "../inc/mem_map.h"
 #include "../inc/main.h"
 
+double RefreshInterval = (double) (tREFW / PARTITION_NUM);
+
 int main(int argc, char **argv)
 {
-	RefreshCounter ddr3_refresh;
-	for(int i = 0; i < MEM_MAP_SEL_NUM; i++)
-		std::cout << "(BC, BI): " 
-			  << (int) MemConfig[i].BC << ", "
-		          << (int) MemConfig[i].BI << std::endl;
-
+	
+	RefreshCounter ddr3_refresh(RefreshInterval);
+	ddr3_refresh.run_RefreshSim();
 
 	return 0;
 }
