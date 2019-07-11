@@ -20,6 +20,20 @@ template<class InputIterator, class T>
   return false;
 }
 
+bool RefreshCounter::search_multiFIFO(unsigned int par_id, unsigned int cur_level)
+{
+	bool temp;
+	for(unsigned int i = 0; i < (unsigned int) PARTITION_NUM; i++) {
+	  if(i == par_id)
+	    temp = search_FIFO(RG_FIFO[i].row_group, RG_FIFO[i].row_group + cur_level, target_rg.back());
+	  else
+	    temp = search_FIFO(RG_FIFO[i].row_group, RG_FIFO[i].row_group + RG_FIFO[i].cur_length, target_rg.back());
+
+	  if(temp == true) return temp;
+	}
+	return temp;
+}
+
 RefreshCounter::RefreshCounter(_SysTick_unit &time_val, char *read_filename)
                : RetentionTimer(time_val) // Initialisation list
 {
@@ -122,7 +136,7 @@ void  RefreshCounter::accessed_checkpoint(unsigned int par_id)
 		(request_time.back() >= access_valid_min && request_time.back() <= access_valid_max)
 	) {
 		// If the arrival request has been recorded inside any partition FIFO, just skip the following step
-		if(search_FIFO(RG_FIFO[par_id].row_group, RG_FIFO[par_id].row_group + cur_level, target_rg.back()) == false) {
+		if(search_multiFIFO(par_id, cur_level) == false) {
 			RG_FIFO[par_id].row_group[cur_level] = target_rg.back();
 			RG_FIFO[par_id].access_size[cur_level] = request_size.back(); 
 			RG_FIFO[par_id].access_type[cur_level].assign(request_type.back());

@@ -109,6 +109,7 @@ class RefreshCounter : private RetentionTimer {
 		// Second proposed approach
 		void accessed_checkpoint(unsigned int par_id);
 		void refresh_partition(unsigned int par_id);
+		bool search_multiFIFO(unsigned int par_id, unsigned int cur_level);
 };
 
 #endif // __REFRESH_COUNTER_H
