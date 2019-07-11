@@ -14,5 +14,7 @@ int main(int argc, char **argv)
 	RefreshCounter ddr3_refresh(RefreshInterval, argv[1]);
 	ddr3_refresh.run_RefreshSim();
 
+	// Show experimental result
+	ddr3_refresh.showEval(1);
 	return 0;
 }

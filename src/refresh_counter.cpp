@@ -53,6 +53,10 @@ RefreshCounter::RefreshCounter(_SysTick_unit &time_val, char *read_filename)
 	// hence the invalid access duration of every sub-window is zero ns
 	for(int i = 0; i < (int) PARTITION_NUM; i++)
 		access_invalid[i] = (_SysTick_unit) 0;
+
+	// Initialisation of evaluation parameters
+	refresh_latency[0] = (unsigned long long) 0;
+	refresh_latency[1] = (unsigned long long) 0;
 }
 
 // Initialising the value of all rows of any bank, with random value
@@ -147,8 +151,15 @@ void  RefreshCounter::accessed_checkpoint(unsigned int par_id)
 		     << request_size.back() << "-Byte)" << endl;
 		pop_pattern(); 
 	}
+	refresh_partition(par_id);
 	RG_FIFO[par_id].cur_length = cur_level;
 	access_invalid[par_id] = RG_FIFO[par_id].cur_length * (unsigned int) tRFC;
+}
+
+void RefreshCounter::showEval(int trial_num)
+{
+	printf("The refresh-induced access latency under approach_%d: %llu ns\r\n", trial_num, refresh_latency[trial_num]);
+
 }
 
 /**
@@ -157,7 +168,7 @@ void  RefreshCounter::accessed_checkpoint(unsigned int par_id)
 **/   	
 void RefreshCounter::refresh_partition(unsigned int par_id)
 {
-
+	refresh_latency[1] += access_invalid[par_id];
 }
 
 /**

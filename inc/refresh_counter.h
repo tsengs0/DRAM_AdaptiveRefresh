@@ -87,11 +87,13 @@ class RefreshCounter : private RetentionTimer {
 		int HyperPeriod_cnt;
 
 		// Components for first approach
-
+		
 		// Components for second approach
 		partition_fifo RG_FIFO[PARTITION_NUM];
 		_SysTick_unit access_invalid[PARTITION_NUM]; // determining the invalid access duratin within each sub-window, subject to tRFC
-		
+
+		// The parameters for evaluation
+		unsigned long long int refresh_latency[2];		
 	public:
 		RefreshCounter(_SysTick_unit &time_val, char *read_filename);
 		//~RefreshCounter(void);
@@ -110,6 +112,9 @@ class RefreshCounter : private RetentionTimer {
 		void accessed_checkpoint(unsigned int par_id);
 		void refresh_partition(unsigned int par_id);
 		bool search_multiFIFO(unsigned int par_id, unsigned int cur_level);
+
+		// Functions for evaluation
+		void showEval(int trial_num);
 };
 
 #endif // __REFRESH_COUNTER_H
