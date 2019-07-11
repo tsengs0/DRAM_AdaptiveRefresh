@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cstdio>
 #include <cstdlib>
+#include <algorithm>
 #include "../inc/refresh_counter.h"
 
 using std::cout;
@@ -8,6 +9,16 @@ using std::cin;
 using std::endl;
 
 _SysTick_unit	round_length = (_SysTick_unit) tREFW;
+
+template<class InputIterator, class T>
+  bool search_FIFO(InputIterator first, InputIterator last, const T& val)
+{
+  while (first!=last) {
+    if (*first==val) return true;
+    ++first;
+  }
+  return false;
+}
 
 RefreshCounter::RefreshCounter(_SysTick_unit &time_val, char *read_filename)
                : RetentionTimer(time_val) // Initialisation list
@@ -110,13 +121,16 @@ void  RefreshCounter::accessed_checkpoint(unsigned int par_id)
 		(request_time.size() != 0) && 
 		(request_time.back() >= access_valid_min && request_time.back() <= access_valid_max)
 	) {
-		RG_FIFO[par_id].row_group[cur_level] = target_rg.back();
-		RG_FIFO[par_id].access_size[cur_level] = request_size.back(); 
-		RG_FIFO[par_id].access_type[cur_level].assign(request_type.back());
+		// If the arrival request has been recorded inside any partition FIFO, just skip the following step
+		if(search_FIFO(RG_FIFO[par_id].row_group, RG_FIFO[par_id].row_group + cur_level, target_rg.back()) == false) {
+			RG_FIFO[par_id].row_group[cur_level] = target_rg.back();
+			RG_FIFO[par_id].access_size[cur_level] = request_size.back(); 
+			RG_FIFO[par_id].access_type[cur_level].assign(request_type.back());
+			cur_level += 1; 
+		}
 		
 		cout << "\t" << request_time.back() << "ns -> " << request_type.back().c_str() << " request ("
 		     << request_size.back() << "-Byte)" << endl;
-		cur_level += 1; 
 		pop_pattern(); 
 	}
 	RG_FIFO[par_id].cur_length = cur_level;

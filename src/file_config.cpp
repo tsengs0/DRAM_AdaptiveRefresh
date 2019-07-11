@@ -9,7 +9,6 @@ enum {
 	REQUEST_TIME  = 3  // Column 4 in .CSV File => The access timing
 };
 
-
 void RefreshCounter::config_access_pattern(char *read_filename)
 {
 	string str;
@@ -52,10 +51,10 @@ void RefreshCounter::config_access_pattern(char *read_filename)
         cout << endl;
     }
 
-	sort(request_type.rbegin(), request_type.rend());   // note: reverse iterators
-	sort(request_size.rbegin(), request_size.rend());   // note: reverse iterators
-	sort(target_rg.rbegin(), target_rg.rend());   // note: reverse iterators
-	sort(request_time.rbegin(), request_time.rend());   // note: reverse iterators
+	reverse(request_type.begin(), request_type.end());   // note: reverse iterators
+	reverse(request_size.begin(), request_size.end());   // note: reverse iterators
+	reverse(target_rg.begin(), target_rg.end());   // note: reverse iterators
+	reverse(request_time.begin(), request_time.end());   // note: reverse iterators
 	for(unsigned int i = 0; i < request_type.size(); i++) {
 		printf("Request_%d, %s, %dB, RG_%d, %u ns\r\n", i, request_type[i].c_str(), request_size[i], target_rg[i], request_time[i]);
 	}
