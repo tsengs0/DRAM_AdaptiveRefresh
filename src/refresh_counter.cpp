@@ -75,10 +75,10 @@ void RefreshCounter::pop_pattern(void)
 
 void RefreshCounter::run_RefreshSim(void)
 {
-	printf("RefreshTime: 0 ns\r\n"); cout << endl << endl;
+	printf("RefreshTime: 0 ns\r\n");
 	while(HyperPeriod_cnt <= (int) HYPER_PERIOD) {
 		_SysTick_unit temp = time_update();
-		accessed_checkpoint((temp / time_interval) - 1);
+		accessed_checkpoint((temp / time_interval) - 1); 
 		printf("RefreshTime: %u ns\r\n", temp); 
 		if((int) temp == (int) round_length) {
 			HyperPeriod_cnt += 1;
@@ -91,22 +91,33 @@ void RefreshCounter::run_RefreshSim(void)
   * @brief Checking if there was any newl arrival memory access within the sub-window of certain partition
   * @param Partition ID to decide the sub-window
 **/   	
-bool RefreshCounter::accessed_checkpoint(unsigned int par_id)
+void  RefreshCounter::accessed_checkpoint(unsigned int par_id)
 {
 	// Identifying the valid access duration within the partition sub-window
 	_SysTick_unit access_valid_max = (HyperPeriod_cnt - 1) * round_length + round_time - access_invalid[par_id] - 1;
 	_SysTick_unit access_valid_min = (HyperPeriod_cnt - 1) * round_length + round_time - time_interval;
-
 	unsigned int cur_level = RG_FIFO[par_id].cur_length;
-	while(request_time.back() >= access_valid_min && request_time.back() <= access_valid_max) {
+	// Just for print out the valid and invalid durations for debugging
+	if(
+		(request_time.size() != 0) && 
+		(request_time.back() >= access_valid_min && request_time.back() <= access_valid_max)
+	) {
+	  cout << "Access_valid(min,max) = " << "(" << access_valid_min - (HyperPeriod_cnt - 1)*round_length << ", " << access_valid_max - (HyperPeriod_cnt - 1)*round_length << "); "
+	       << "Access_invalid: " << access_invalid[par_id] << endl;
+
+	}
+	while(
+		(request_time.size() != 0) && 
+		(request_time.back() >= access_valid_min && request_time.back() <= access_valid_max)
+	) {
 		RG_FIFO[par_id].row_group[cur_level] = target_rg.back();
 		RG_FIFO[par_id].access_size[cur_level] = request_size.back(); 
 		RG_FIFO[par_id].access_type[cur_level].assign(request_type.back());
 		
 		cout << "\t" << request_time.back() << "ns -> " << request_type.back().c_str() << " request ("
-		     << request_size.back() << "-Byte" << endl;
+		     << request_size.back() << "-Byte)" << endl;
 		cur_level += 1; 
-		pop_pattern();
+		pop_pattern(); 
 	}
 	RG_FIFO[par_id].cur_length = cur_level;
 	access_invalid[par_id] = RG_FIFO[par_id].cur_length * (unsigned int) tRFC;

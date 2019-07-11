@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "../inc/refresh_counter.h"
 using namespace std;
 

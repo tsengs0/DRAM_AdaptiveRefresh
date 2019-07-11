@@ -107,7 +107,7 @@ class RefreshCounter : private RetentionTimer {
 		void update_row_group(int bank_id, int group_id, UpdateOp operation);
 
 		// Second proposed approach
-		bool accessed_checkpoint(unsigned int par_id);
+		void accessed_checkpoint(unsigned int par_id);
 		void refresh_partition(unsigned int par_id);
 };
 
