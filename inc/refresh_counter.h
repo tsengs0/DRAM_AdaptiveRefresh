@@ -31,6 +31,7 @@
 // Configuration for simulation
 #define HYPER_PERIOD 3
 
+typedef unsigned int _SysTick_unit;
 typedef unsigned int Row_t;
 typedef unsigned char RowGroup_t; // only last 3-bit are valid
 typedef char UpdateOp;
@@ -48,39 +49,66 @@ struct Bank_t {
 	RowGroup_t access[ROW_GP_NUM]; 
 };
 
+typedef struct Partition_fifo_t {
+	// FIFO for each partition
+	unsigned int row_group[PARTITION_RG_NUM];
+
+	// For recording the number of row groups containing inside the FIFO
+	unsigned int cur_length;
+
+	// Each request size and request type
+	unsigned int access_size[PARTITION_RG_NUM]; 
+	std::string access_type[PARTITION_RG_NUM];
+} partition_fifo;
+
 class RetentionTimer {
 	private:
-		double time_interval; // the time interval of the timer
-		double round_time;
+
+	protected:
+		_SysTick_unit time_interval; // the time interval of one partition sub-window
+		_SysTick_unit round_time;
 	public:
 		//~RetentionTimer();
-		RetentionTimer(double &time_val);
+		RetentionTimer(_SysTick_unit &time_val);
 
-		double time_unit_config(double &time_val);
-		double time_update(void); 
+		_SysTick_unit time_unit_config(_SysTick_unit &time_val);
+		_SysTick_unit time_update(void); 
 		
 };
 
-class RefreshCounter : public RetentionTimer {
+class RefreshCounter : private RetentionTimer {
 	private:
 		// For access pattern
 		std::vector<std::string> request_type; 
-		std::vector<int> request_size, target_rg;
-		std::vector<double> request_time;
+		std::vector<unsigned int> request_size, target_rg;
+		std::vector<_SysTick_unit> request_time;
 		
 		struct Bank_t bank[BANK_NUM];	
 		int HyperPeriod_cnt;
+
+		// Components for first approach
+
+		// Components for second approach
+		partition_fifo RG_FIFO[PARTITION_NUM];
+		_SysTick_unit access_invalid[PARTITION_NUM]; // determining the invalid access duratin within each sub-window, subject to tRFC
 		
 	public:
-		RefreshCounter(double &time_val, char *read_filename);
+		RefreshCounter(_SysTick_unit &time_val, char *read_filename);
 		//~RefreshCounter(void);
 		void bank_init(int bank_id);
 		void view_bank(int bank_id);
-		void update_row_group(int bank_id, int group_id, UpdateOp operation);
+		
 		void refresh_row_group(int bank_id, int group_id);
 		void config_access_pattern(char *read_filename);
+		void pop_pattern(void);
 		void run_RefreshSim(void);
-};
 
+		// First proposed approach
+		void update_row_group(int bank_id, int group_id, UpdateOp operation);
+
+		// Second proposed approach
+		bool accessed_checkpoint(unsigned int par_id);
+		void refresh_partition(unsigned int par_id);
+};
 
 #endif // __REFRESH_COUNTER_H

@@ -44,3 +44,4 @@ clean:
 	rm  obj/*.o
 #	rm  bin/*
 	rm  inc/*.h.gch
+	rm src/*.swp

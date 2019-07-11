@@ -3,7 +3,7 @@
 #include "../inc/mem_map.h"
 #include "../inc/main.h"
 
-double RefreshInterval = (double) (tREFW / PARTITION_NUM);
+_SysTick_unit RefreshInterval = (_SysTick_unit) (tREFW / PARTITION_NUM);
 
 int main(int argc, char **argv)
 {

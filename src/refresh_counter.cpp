@@ -7,9 +7,9 @@ using std::cout;
 using std::cin;
 using std::endl;
 
-double	round_length = (double) tREFW;
+_SysTick_unit	round_length = (_SysTick_unit) tREFW;
 
-RefreshCounter::RefreshCounter(double &time_val, char *read_filename)
+RefreshCounter::RefreshCounter(_SysTick_unit &time_val, char *read_filename)
                : RetentionTimer(time_val) // Initialisation list
 {
 	for(int i = 0; i < (int) BANK_NUM; i++) {
@@ -23,6 +23,11 @@ RefreshCounter::RefreshCounter(double &time_val, char *read_filename)
 
 	// Configuring the access patterns
 	config_access_pattern(read_filename);
+
+	// Initially, there is no data stored inside the DRAM
+	// hence the invalid access duration of every sub-window is zero ns
+	for(int i = 0; i < (int) PARTITION_NUM; i++)
+		access_invalid[i] = (_SysTick_unit) 0;
 }
 
 // Initialising the value of all rows of any bank, with random value
@@ -60,12 +65,21 @@ void RefreshCounter::refresh_row_group(int bank_id, int group_id)
 	bank[bank_id].access[group_id] += 0x02;	
 }
 
+void RefreshCounter::pop_pattern(void)
+{
+	request_type.pop_back(); 
+	request_size.pop_back();
+	target_rg.pop_back();
+	request_time.pop_back();
+}
+
 void RefreshCounter::run_RefreshSim(void)
 {
 	printf("RefreshTime: 0 ns\r\n"); cout << endl << endl;
 	while(HyperPeriod_cnt <= (int) HYPER_PERIOD) {
-		double temp = time_update();
-		printf("RefreshTime: %d ns\r\n", (int) temp); cout << endl << endl;
+		_SysTick_unit temp = time_update();
+		accessed_checkpoint((temp / time_interval) - 1);
+		printf("RefreshTime: %u ns\r\n", temp); 
 		if((int) temp == (int) round_length) {
 			HyperPeriod_cnt += 1;
 			cout << "================== Refresh Window_" << HyperPeriod_cnt << " ================" << endl;
@@ -73,22 +87,55 @@ void RefreshCounter::run_RefreshSim(void)
 	}
 }
 
+/**
+  * @brief Checking if there was any newl arrival memory access within the sub-window of certain partition
+  * @param Partition ID to decide the sub-window
+**/   	
+bool RefreshCounter::accessed_checkpoint(unsigned int par_id)
+{
+	// Identifying the valid access duration within the partition sub-window
+	_SysTick_unit access_valid_max = (HyperPeriod_cnt - 1) * round_length + round_time - access_invalid[par_id] - 1;
+	_SysTick_unit access_valid_min = (HyperPeriod_cnt - 1) * round_length + round_time - time_interval;
+
+	unsigned int cur_level = RG_FIFO[par_id].cur_length;
+	while(request_time.back() >= access_valid_min && request_time.back() <= access_valid_max) {
+		RG_FIFO[par_id].row_group[cur_level] = target_rg.back();
+		RG_FIFO[par_id].access_size[cur_level] = request_size.back(); 
+		RG_FIFO[par_id].access_type[cur_level].assign(request_type.back());
+		
+		cout << "\t" << request_time.back() << "ns -> " << request_type.back().c_str() << " request ("
+		     << request_size.back() << "-Byte" << endl;
+		cur_level += 1; 
+		pop_pattern();
+	}
+	RG_FIFO[par_id].cur_length = cur_level;
+	access_invalid[par_id] = RG_FIFO[par_id].cur_length * (unsigned int) tRFC;
+}
 
 /**
   * @brief Initialising the time interval of refresh operation
   * @param refresh-interval parameter
 **/   	
-RetentionTimer::RetentionTimer(double &time_val)
+void RefreshCounter::refresh_partition(unsigned int par_id)
+{
+
+}
+
+/**
+  * @brief Initialising the time interval of refresh operation
+  * @param refresh-interval parameter
+**/   	
+RetentionTimer::RetentionTimer(_SysTick_unit &time_val)
 {
 	time_unit_config(time_val);
-	round_time = (double) 0.0;
+	round_time = (_SysTick_unit) 0;
 }
 
 /**
   * @brief Configure the refresh interval
   * @param refresh-interval parameter
 **/   	
-double RetentionTimer::time_unit_config(double &time_val)
+_SysTick_unit RetentionTimer::time_unit_config(_SysTick_unit &time_val)
 {
 	time_interval = time_val;
 	return time_interval;
@@ -97,7 +144,7 @@ double RetentionTimer::time_unit_config(double &time_val)
 /**
   * @brief Incrementing the timer counter once every given refresh interval
 **/   	
-double RetentionTimer::time_update(void)
+_SysTick_unit RetentionTimer::time_update(void)
 {
 	round_time += time_interval;
 	round_time = (round_time == (int) round_length + time_interval) ? time_interval : round_time;

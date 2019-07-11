@@ -14,9 +14,6 @@ void RefreshCounter::config_access_pattern(char *read_filename)
 	string str;
 	short state; 
  
-	char filename[100], output_FileName[100];
-
-
 	cout << "Reading " << read_filename << endl;
 	// Reading the file
 	ifstream ifs(read_filename);
@@ -26,6 +23,7 @@ void RefreshCounter::config_access_pattern(char *read_filename)
 	}
 
     //Reading .CSV file column by column
+    getline(ifs, str); // Skipping first line
     while(getline(ifs,str)) {
         string token;
         istringstream stream(str);
@@ -37,24 +35,28 @@ void RefreshCounter::config_access_pattern(char *read_filename)
 		cout << token.c_str() << ",";
 	    }
             else if(state == (short) REQUEST_SIZE) {
-		request_size.push_back(atoi(token.c_str()));
-		cout << atoi(token.c_str()) << ",";
+		request_size.push_back(atoll(token.c_str()));
+		cout << atoll(token.c_str()) << ",";
 	    }
             else if(state == (short) TARGET_RG) {
-		target_rg.push_back(atoi(token.c_str()));
-		cout << atoi(token.c_str()) << ",";
+		target_rg.push_back(atoll(token.c_str()));
+		cout << atoll(token.c_str()) << ",";
 	    }
             else { // if(state == (short) REQUEST_TIME) {
-		request_time.push_back(stof(token));
-		cout << stof(token) << ",";
+		request_time.push_back(atoll(token.c_str()));
+		cout << atoll(token.c_str()) << ",";
 	    }
 	    state += 1;
         }
         cout << endl;
     }
 
-	for(int i = 0; i < request_type.size(); i++) {
-		printf("Request_%d, %s, %dB, RG_%d, %02f ns\r\n", i, request_type[i].c_str(), request_size[i], target_rg[i], request_time[i]);
+	sort(request_type.rbegin(), request_type.rend());   // note: reverse iterators
+	sort(request_size.rbegin(), request_size.rend());   // note: reverse iterators
+	sort(target_rg.rbegin(), target_rg.rend());   // note: reverse iterators
+	sort(request_time.rbegin(), request_time.rend());   // note: reverse iterators
+	for(unsigned int i = 0; i < request_type.size(); i++) {
+		printf("Request_%d, %s, %dB, RG_%d, %u ns\r\n", i, request_type[i].c_str(), request_size[i], target_rg[i], request_time[i]);
 	}
 
 	/*
