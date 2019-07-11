@@ -123,8 +123,10 @@ void RefreshCounter::run_RefreshSim(void)
 void  RefreshCounter::accessed_checkpoint(unsigned int par_id)
 {
 	// Identifying the valid access duration within the partition sub-window
+	_SysTick_unit sub_window_max   = (HyperPeriod_cnt - 1) * round_length + round_time - 1;
 	_SysTick_unit access_valid_max = (HyperPeriod_cnt - 1) * round_length + round_time - access_invalid[par_id] - 1;
 	_SysTick_unit access_valid_min = (HyperPeriod_cnt - 1) * round_length + round_time - time_interval;
+	unsigned int invalid_request_cnt; invalid_request_cnt = (unsigned int) 0;
 	unsigned int cur_level = RG_FIFO[par_id].cur_length;
 	// Just for print out the valid and invalid durations for debugging
 	if(
@@ -137,19 +139,31 @@ void  RefreshCounter::accessed_checkpoint(unsigned int par_id)
 	}
 	while(
 		(request_time.size() != 0) && 
-		(request_time.back() >= access_valid_min && request_time.back() <= access_valid_max)
+		(request_time.back() >= access_valid_min && request_time.back() <= sub_window_max )
 	) {
-		// If the arrival request has been recorded inside any partition FIFO, just skip the following step
-		if(search_multiFIFO(par_id, cur_level) == false) {
-			RG_FIFO[par_id].row_group[cur_level] = target_rg.back();
-			RG_FIFO[par_id].access_size[cur_level] = request_size.back(); 
-			RG_FIFO[par_id].access_type[cur_level].assign(request_type.back());
-			cur_level += 1; 
+		// Enqueuing the arrival requests into partition FIFO if it arrived at valid duration
+		if(request_time.back() <= access_valid_max) {
+			// If the arrival request has been recorded inside any partition FIFO, just skip the following step
+			if(search_multiFIFO(par_id, cur_level) == false) {
+				RG_FIFO[par_id].row_group[cur_level] = target_rg.back();
+				RG_FIFO[par_id].access_size[cur_level] = request_size.back(); 
+				RG_FIFO[par_id].access_type[cur_level].assign(request_type.back());
+				cur_level += 1; 
+			}
+			
+			cout << "\t" << request_time.back() << "ns -> " << request_type.back().c_str() << " request ("
+			     << request_size.back() << "-Byte) targetting to row group (" << target_rg.back() << ")" << endl;
+			pop_pattern(); 
 		}
-		
-		cout << "\t" << request_time.back() << "ns -> " << request_type.back().c_str() << " request ("
-		     << request_size.back() << "-Byte)" << endl;
-		pop_pattern(); 
+		else { // Procrastinating the arrival requests arriving at invalid duration
+		       // Assuming those requested will be accesses at beginning of next sub-window. 
+		       // Note that, the real accessed timing need to depend on the command scheduler, 
+		       // we will leave as future work after merging this refresh mechansim into existing DRAM simulator
+		       request_time[request_time.size() - 1 - invalid_request_cnt] = sub_window_max + 1 + invalid_request_cnt;
+		       cout << "\t\t#Procrastinating Request's ideal access time to " << request_time[request_time.size() - 1 - invalid_request_cnt] << " ns (target row group: " 
+			    << target_rg[target_rg.size() - 1 - invalid_request_cnt] << ")" << endl;
+		       invalid_request_cnt -= 1;
+		}
 	}
 	refresh_partition(par_id);
 	RG_FIFO[par_id].cur_length = cur_level;
