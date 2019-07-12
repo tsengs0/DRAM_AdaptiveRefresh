@@ -4,6 +4,7 @@
 #include "../inc/main.h"
 
 _SysTick_unit RefreshInterval = (_SysTick_unit) (tREFW / PARTITION_NUM);
+extern int solution_x;
 
 int main(int argc, char **argv)
 {
@@ -12,9 +13,10 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 	RefreshCounter ddr3_refresh(RefreshInterval, argv[1]);
+	solution_x = (int) SOLUTION_2;
 	ddr3_refresh.run_RefreshSim();
 
 	// Show experimental result
-	ddr3_refresh.showEval(1);
+	ddr3_refresh.showEval((int) solution_x);
 	return 0;
 }

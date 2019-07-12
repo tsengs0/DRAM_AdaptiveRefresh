@@ -8,6 +8,8 @@ using std::cout;
 using std::cin;
 using std::endl;
 
+int solution_x;
+
 _SysTick_unit	round_length = (_SysTick_unit) tREFW;
 
 template<class InputIterator, class T>
@@ -55,8 +57,10 @@ RefreshCounter::RefreshCounter(_SysTick_unit &time_val, char *read_filename)
 		access_invalid[i] = (_SysTick_unit) 0;
 
 	// Initialisation of evaluation parameters
-	refresh_latency[0] = (unsigned long long) 0;
-	refresh_latency[1] = (unsigned long long) 0;
+	for(int i = 0; i < (int) SOLUTION_NUM; i++) {
+		refresh_latency[i] = (unsigned long long) 0;
+		valid_bus_time[i] = (_SysTick_unit) 0;
+	}
 }
 
 // Initialising the value of all rows of any bank, with random value
@@ -128,6 +132,10 @@ void  RefreshCounter::accessed_checkpoint(unsigned int par_id)
 	_SysTick_unit access_valid_min = (HyperPeriod_cnt - 1) * round_length + round_time - time_interval;
 	unsigned int invalid_request_cnt; invalid_request_cnt = (unsigned int) 0;
 	unsigned int cur_level = RG_FIFO[par_id].cur_length;
+
+	// Accumulating the invalid bus utilising time
+	acc_validBusTime(access_valid_min, access_valid_max);	
+
 	// Just for print out the valid and invalid durations for debugging
 	if(
 		(request_time.size() != 0) && 
@@ -170,10 +178,34 @@ void  RefreshCounter::accessed_checkpoint(unsigned int par_id)
 	access_invalid[par_id] = RG_FIFO[par_id].cur_length * (unsigned int) tRFC;
 }
 
+void RefreshCounter::acc_validBusTime(_SysTick_unit valid_min, _SysTick_unit valid_max)
+{
+	if(solution_x == (int) SOLUTION_1) {
+		valid_bus_time[(int) SOLUTION_1] += (valid_max - valid_min);
+	}
+	else if(solution_x == (int) SOLUTION_2) {
+		valid_bus_time[(int) SOLUTION_2] += (valid_max - valid_min);
+	}
+}
+
+double RefreshCounter::calc_netBandwidth(void)
+{
+	_SysTick_unit elapsed_time = (HyperPeriod_cnt - 1) * round_length + round_time;
+
+	if(solution_x == (int) SOLUTION_1) {
+		return (double) (valid_bus_time[(int) SOLUTION_1] / elapsed_time);
+	}
+	else if(solution_x == (int) SOLUTION_2) {
+		return (double) valid_bus_time[(int) SOLUTION_2] / (double) elapsed_time;
+	}
+}
+
 void RefreshCounter::showEval(int trial_num)
 {
+	_SysTick_unit elapsed_time = (HyperPeriod_cnt - 1) * round_length + round_time;
+	
 	printf("The refresh-induced access latency under approach_%d: %llu ns\r\n", trial_num, refresh_latency[trial_num]);
-
+	printf("The net bandwidth under approach_%d: %llu (ns) / %llu (ns) = %lf\%\r\n", trial_num, valid_bus_time[trial_num], elapsed_time, calc_netBandwidth() * 100);
 }
 
 /**

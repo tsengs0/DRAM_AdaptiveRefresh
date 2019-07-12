@@ -30,7 +30,7 @@
 
 // Configuration for simulation
 #define HYPER_PERIOD 3
-
+#define SOLUTION_NUM 2
 typedef unsigned int _SysTick_unit;
 typedef unsigned int Row_t;
 typedef unsigned char RowGroup_t; // only last 3-bit are valid
@@ -39,6 +39,11 @@ typedef char UpdateOp;
 enum {
 	INC = 0,
 	DEC = 1
+};
+
+enum {
+	SOLUTION_1 = 0,
+	SOLUTION_2 = 1
 };
 
 struct Bank_t {
@@ -93,7 +98,9 @@ class RefreshCounter : private RetentionTimer {
 		_SysTick_unit access_invalid[PARTITION_NUM]; // determining the invalid access duratin within each sub-window, subject to tRFC
 
 		// The parameters for evaluation
-		unsigned long long int refresh_latency[2];		
+		_SysTick_unit valid_bus_time[2];
+		unsigned long long int refresh_latency[2];	
+	
 	public:
 		RefreshCounter(_SysTick_unit &time_val, char *read_filename);
 		//~RefreshCounter(void);
@@ -103,7 +110,6 @@ class RefreshCounter : private RetentionTimer {
 		void refresh_row_group(int bank_id, int group_id);
 		void config_access_pattern(char *read_filename);
 		void pop_pattern(void);
-		void run_RefreshSim(void);
 
 		// First proposed approach
 		void update_row_group(int bank_id, int group_id, UpdateOp operation);
@@ -112,8 +118,13 @@ class RefreshCounter : private RetentionTimer {
 		void accessed_checkpoint(unsigned int par_id);
 		void refresh_partition(unsigned int par_id);
 		bool search_multiFIFO(unsigned int par_id, unsigned int cur_level);
+		void run_RefreshSim(void);
 
+		// Common functionalities for every approach
+ 		void acc_validBusTime(_SysTick_unit valid_min, _SysTick_unit valid_max);
+	
 		// Functions for evaluation
+		double calc_netBandwidth(void);
 		void showEval(int trial_num);
 };
 
