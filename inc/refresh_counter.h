@@ -18,7 +18,8 @@
 #define DDR3_1333x4Gb
 // Refer to Micron DDR3L-1333 (operating frequency: 1333 MHz)
 #ifdef DDR3_1333x4Gb
-	#define tREFW 64000000 // 64000000 ns = 64000 us = 64 ms
+	#define tRetention 64000000 // 64000000 ns = 64000 us = 64 ms
+	#define tREFW tRetention 
 	#define tREFI 7812.5 // 7812.5 ns = 7.812 us
 	#define tRFC 260 // 260 ns
 #elif DDR3_1333x8Gb
@@ -64,6 +65,9 @@ typedef struct Partition_fifo_t {
 	// Each request size and request type
 	unsigned int access_size[PARTITION_RG_NUM]; 
 	std::string access_type[PARTITION_RG_NUM];
+
+	// Additional parameter(s) for debugging and evaluation
+	_SysTick_unit RowGroup_retention[PARTITION_RG_NUM]; 
 } partition_fifo;
 
 class RetentionTimer {
@@ -119,12 +123,14 @@ class RefreshCounter : private RetentionTimer {
 		void refresh_partition(unsigned int par_id);
 		bool search_multiFIFO(unsigned int par_id, unsigned int cur_level);
 		void run_RefreshSim(void);
+		void reset_retention(unsigned int par_id, unsigned int cur_rg);
 
 		// Common functionalities for every approach
  		void acc_validBusTime(_SysTick_unit valid_min, _SysTick_unit valid_max);
 	
 		// Functions for evaluation
 		double calc_netBandwidth(void);
+		bool verify_DataIntegrity(void);
 		void showEval(int trial_num);
 };
 

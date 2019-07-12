@@ -156,6 +156,9 @@ void  RefreshCounter::accessed_checkpoint(unsigned int par_id)
 				RG_FIFO[par_id].row_group[cur_level] = target_rg.back();
 				RG_FIFO[par_id].access_size[cur_level] = request_size.back(); 
 				RG_FIFO[par_id].access_type[cur_level].assign(request_type.back());
+				
+				// Reset the retention time of newly arrival request's corresponding row group
+				reset_retention(par_id, cur_level);
 				cur_level += 1; 
 			}
 			
@@ -176,6 +179,11 @@ void  RefreshCounter::accessed_checkpoint(unsigned int par_id)
 	refresh_partition(par_id);
 	RG_FIFO[par_id].cur_length = cur_level;
 	access_invalid[par_id] = RG_FIFO[par_id].cur_length * (unsigned int) tRFC;
+}
+
+void RefreshCounter::reset_retention(unsigned int par_id, unsigned int cur_rg)
+{
+	RG_FIFO[par_id].RowGroup_retention[cur_rg] = (_SysTick_unit) tRetention;
 }
 
 void RefreshCounter::acc_validBusTime(_SysTick_unit valid_min, _SysTick_unit valid_max)
@@ -215,7 +223,26 @@ void RefreshCounter::showEval(int trial_num)
 void RefreshCounter::refresh_partition(unsigned int par_id)
 {
 	refresh_latency[1] += access_invalid[par_id];
+
+	// After refreshing, the retention time of all row groups in the same partition become 64 ms 
+	unsigned int Ref_cnt = RG_FIFO[par_id].cur_length;
+	for(unsigned int i = 0; i < Ref_cnt; i++) 
+		reset_retention(par_id, i);
 }
+
+bool RefreshCounter::verify_DataIntegrity(void)
+{
+	for(unsigned int i = 0; i < (unsigned int) PARTITION_NUM; i++) {
+	  unsigned int cur_level = RG_FIFO[i].cur_length;
+	  for(unsigned int j = 0; j < cur_level; j++) {
+		_SysTick_unit temp = RG_FIFO[i].RowGroup_retention[j];
+		printf("RG[%d].RowGroup[%d]'s data-integrity lifetime is: %llu ns\r\n", i, j, temp);
+		if(temp > (_SysTick_unit) tRetention) 
+		  return false;
+	  }
+	}
+	return true;
+} 
 
 /**
   * @brief Initialising the time interval of refresh operation
@@ -246,3 +273,4 @@ _SysTick_unit RetentionTimer::time_update(void)
 	round_time = (round_time == (int) round_length + time_interval) ? time_interval : round_time;
 	return round_time;
 } 
+

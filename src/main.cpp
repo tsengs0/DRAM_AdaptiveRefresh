@@ -18,5 +18,9 @@ int main(int argc, char **argv)
 
 	// Show experimental result
 	ddr3_refresh.showEval((int) solution_x);
+	if(ddr3_refresh.verify_DataIntegrity() == true)
+		std::cout << "The data integrity of all rows are kept." << std::endl;
+	else // certain row(s) was/were refreshed later than its/their retention time
+		std::cout << "The data integrity is not kept." << std::endl;
 	return 0;
 }
