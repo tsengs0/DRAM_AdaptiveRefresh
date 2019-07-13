@@ -13,10 +13,16 @@ int solution_x;
 _SysTick_unit	round_length = (_SysTick_unit) tREFW;
 
 template<class InputIterator, class T>
-  bool search_FIFO(InputIterator first, InputIterator last, const T& val)
+bool RefreshCounter::search_FIFO(InputIterator first, InputIterator last, const T& val)
 {
+  // To record the iteration for marking the index for target querying row group inside the partition FIFO, if it is found somewhere
+  unsigned int temp; temp = (unsigned int) 0;
   while (first!=last) {
-    if (*first==val) return true;
+    if (*first==val) {
+	query_row_group = temp;
+	return true;
+   }
+    temp += 1;
     ++first;
   }
   return false;
@@ -31,7 +37,10 @@ bool RefreshCounter::search_multiFIFO(unsigned int par_id, unsigned int cur_leve
 	  else
 	    temp = search_FIFO(RG_FIFO[i].row_group, RG_FIFO[i].row_group + RG_FIFO[i].cur_length, target_rg.back());
 
-	  if(temp == true) return temp;
+	  if(temp == true) {
+		query_partition = i;
+		return temp;
+	  }
 	}
 	return temp;
 }
@@ -141,7 +150,8 @@ void  RefreshCounter::accessed_checkpoint(unsigned int par_id)
 		(request_time.size() != 0) && 
 		(request_time.back() >= access_valid_min && request_time.back() <= access_valid_max)
 	) {
-	  cout << "Access_valid(min,max) = " << "(" << access_valid_min - (HyperPeriod_cnt - 1)*round_length << ", " << access_valid_max - (HyperPeriod_cnt - 1)*round_length << "); "
+	  cout << "Access_valid(min,max) = " << "(" << access_valid_min - (HyperPeriod_cnt - 1)*round_length << ", " 
+	       << access_valid_max - (HyperPeriod_cnt - 1)*round_length << "); "
 	       << "Access_invalid: " << access_invalid[par_id] << endl;
 
 	}
@@ -161,6 +171,10 @@ void  RefreshCounter::accessed_checkpoint(unsigned int par_id)
 				reset_retention(par_id, cur_level);
 				cur_level += 1; 
 			}
+			else { // If the newly arrival request has been equeued in any partition FIFO
+			       // just refreshing its corresponding row group by resetting its retentin time to64 ms
+				reset_retention(query_partition, query_row_group);
+			}
 			
 			cout << "\t" << request_time.back() << "ns -> " << request_type.back().c_str() << " request ("
 			     << request_size.back() << "-Byte) targetting to row group (" << target_rg.back() << ")" << endl;
@@ -176,16 +190,34 @@ void  RefreshCounter::accessed_checkpoint(unsigned int par_id)
 		       invalid_request_cnt -= 1;
 		}
 	}
-	refresh_partition(par_id);
+
+	// 1) Decaying all row groups apart from the current checkpoint's corresponding partition FIFO
+	// 2) Refreshing row groups of current checkpoint's corresponding partition FIFO
+	for(unsigned int i = 0; i < (unsigned int) PARTITION_NUM; i++) {
+		if(i == par_id) refresh_partition(i); 
+		else            decay_partition(i);
+	}
 	RG_FIFO[par_id].cur_length = cur_level;
 	access_invalid[par_id] = RG_FIFO[par_id].cur_length * (unsigned int) tRFC;
 }
 
 void RefreshCounter::reset_retention(unsigned int par_id, unsigned int cur_rg)
 {
-	RG_FIFO[par_id].RowGroup_retention[cur_rg] = (_SysTick_unit) tRetention;
+	RG_FIFO[par_id].RowGroup_retention[cur_rg] = (_SysTick_unit) 0; // (_SysTick_unit) tRetention;
 }
 
+void RefreshCounter::decay_retention(unsigned int par_id, unsigned int cur_rg, _SysTick_unit decay_time)
+{
+	RG_FIFO[par_id].RowGroup_retention[cur_rg] += decay_time;
+}
+
+void RefreshCounter::decay_partition(unsigned int par_id)
+{
+	unsigned int temp = RG_FIFO[par_id].cur_length;
+	_SysTick_unit decay_time = (_SysTick_unit) tRetention / (_SysTick_unit) PARTITION_NUM;
+	for(unsigned int i = 0; i < temp; i++)
+		decay_retention(par_id, i, decay_time);
+}
 void RefreshCounter::acc_validBusTime(_SysTick_unit valid_min, _SysTick_unit valid_max)
 {
 	if(solution_x == (int) SOLUTION_1) {
@@ -236,7 +268,7 @@ bool RefreshCounter::verify_DataIntegrity(void)
 	  unsigned int cur_level = RG_FIFO[i].cur_length;
 	  for(unsigned int j = 0; j < cur_level; j++) {
 		_SysTick_unit temp = RG_FIFO[i].RowGroup_retention[j];
-		printf("RG[%d].RowGroup[%d]'s data-integrity lifetime is: %llu ns\r\n", i, j, temp);
+		printf("RG[%d].RowGroup[%d]'s data-holding time since last access or refresh point is: %f ms\r\n", i, j, (float) temp/1000000);
 		if(temp > (_SysTick_unit) tRetention) 
 		  return false;
 	  }

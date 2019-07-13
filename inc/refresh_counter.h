@@ -100,6 +100,8 @@ class RefreshCounter : private RetentionTimer {
 		// Components for second approach
 		partition_fifo RG_FIFO[PARTITION_NUM];
 		_SysTick_unit access_invalid[PARTITION_NUM]; // determining the invalid access duratin within each sub-window, subject to tRFC
+		unsigned int query_partition;
+		unsigned int query_row_group;
 
 		// The parameters for evaluation
 		_SysTick_unit valid_bus_time[2];
@@ -121,9 +123,12 @@ class RefreshCounter : private RetentionTimer {
 		// Second proposed approach
 		void accessed_checkpoint(unsigned int par_id);
 		void refresh_partition(unsigned int par_id);
+		template<class InputIterator, class T> bool search_FIFO(InputIterator first, InputIterator last, const T& val);
 		bool search_multiFIFO(unsigned int par_id, unsigned int cur_level);
 		void run_RefreshSim(void);
 		void reset_retention(unsigned int par_id, unsigned int cur_rg);
+		void decay_retention(unsigned int par_id, unsigned int cur_rg, _SysTick_unit decay_time);
+		void decay_partition(unsigned int par_id);
 
 		// Common functionalities for every approach
  		void acc_validBusTime(_SysTick_unit valid_min, _SysTick_unit valid_max);
