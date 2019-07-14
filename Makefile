@@ -3,17 +3,18 @@ SRC_DIR:= ./src
 INC_DIR:= ./inc
 OBJ_DIR:= ./obj
 BIN_DIR:= ./bin
-CFLAG:= -std=c++11 -Wall
+CFLAG:= -std=c++11 -Wall #-g
 SRCEXT:= cpp
-#LIB=-lm -H -c -Wall
+#LIB=-lm -H -c 
 
 APP= RefreshCounter
 
-all: file_config.o  main.o  mem_map.o  refresh_counter.o 
+all: file_config.o  main.o  mem_map.o  access_refresh.o refresh_counter.o 
 	g++ $(CFLAG) -g -o $(APP) \
 			$(OBJ_DIR)/file_config.o \
 			$(OBJ_DIR)/main.o \
 			$(OBJ_DIR)/mem_map.o \
+			$(OBJ_DIR)/access_refresh.o \
 			$(OBJ_DIR)/refresh_counter.o 
 	mv $(APP) $(BIN_DIR)
 
@@ -32,12 +33,22 @@ mem_map.o : $(SRC_DIR)/mem_map.$(SRCEXT) $(INC_DIR)/mem_map.h
 	$(CC) $(INC_DIR) $(CFLAG) -g -c $(SRC_DIR)/mem_map.$(SRCEXT)
 	mv *.o obj/
 
+access_refresh.o : $(SRC_DIR)/access_refresh.$(SRCEXT) $(INC_DIR)/refresh_counter.h 
+	$(CC) $(INC_DIR) $(CFLAG) -lm -g -c $(SRC_DIR)/access_refresh.$(SRCEXT)
+	mv *.o obj/
+
 refresh_counter.o : $(SRC_DIR)/refresh_counter.$(SRCEXT) $(INC_DIR)/refresh_counter.h 
 	$(CC) $(INC_DIR) $(CFLAG) -lm -g -c $(SRC_DIR)/refresh_counter.$(SRCEXT)
 	mv *.o obj/
 
-run:
-	$(BIN_DIR)/$(APP) access_pattern.csv
+run_1:
+	$(BIN_DIR)/$(APP) access_pattern.csv 1
+
+run_2:
+	$(BIN_DIR)/$(APP) access_pattern.csv 2
+
+run_all:
+	$(BIN_DIR)/$(APP) access_pattern.csv 3
 
 clean:
 	clear
