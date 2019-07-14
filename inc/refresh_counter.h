@@ -15,6 +15,9 @@
 #define PARTITION_NUM 8
 #define PARTITION_RG_NUM ((RG_PER_BANK * BANK_NUM) / PARTITION_NUM)
 
+// DRAM device configuration for approach 1
+#define SUB_WINDOW_NUM 4
+
 #define DDR3_1333x4Gb
 // Refer to Micron DDR3L-1333 (operating frequency: 1333 MHz)
 #ifdef DDR3_1333x4Gb
@@ -28,7 +31,6 @@
 	
 #endif
 
-
 // Configuration for simulation
 #define HYPER_PERIOD 3
 #define SOLUTION_NUM 2
@@ -40,11 +42,6 @@ typedef char UpdateOp;
 enum {
 	INC = 0,
 	DEC = 1
-};
-
-enum {
-	SOLUTION_1 = 0,
-	SOLUTION_2 = 1
 };
 
 struct Bank_t {
@@ -85,7 +82,8 @@ class RetentionTimer {
 		
 };
 
-class RefreshCounter : private RetentionTimer {
+// Approach 1: Access-aware refresh coutner
+class AccessRefreshCounter : private RetentionTimer {
 	private:
 		// For access pattern
 		std::vector<std::string> request_type; 
@@ -95,20 +93,14 @@ class RefreshCounter : private RetentionTimer {
 		struct Bank_t bank[BANK_NUM];	
 		int HyperPeriod_cnt;
 
-		// Components for first approach
-		
-		// Components for second approach
-		partition_fifo RG_FIFO[PARTITION_NUM];
-		_SysTick_unit access_invalid[PARTITION_NUM]; // determining the invalid access duratin within each sub-window, subject to tRFC
-		unsigned int query_partition;
-		unsigned int query_row_group;
+		_SysTick_unit access_invalid[SUB_WINDOW_NUM]; // determining the invalid access duratin within each sub-window, subject to tRFC
 
 		// The parameters for evaluation
-		_SysTick_unit valid_bus_time[2];
-		unsigned long long int refresh_latency[2];	
+		_SysTick_unit valid_bus_time;
+		unsigned long long int refresh_latency;	
 	
 	public:
-		RefreshCounter(_SysTick_unit &time_val, char *read_filename);
+		AccessRefreshCounter(_SysTick_unit &time_val, char *read_filename);
 		//~RefreshCounter(void);
 		void bank_init(int bank_id);
 		void view_bank(int bank_id);
@@ -119,6 +111,55 @@ class RefreshCounter : private RetentionTimer {
 
 		// First proposed approach
 		void update_row_group(int bank_id, int group_id, UpdateOp operation);
+		void accessed_checkpoint(unsigned int par_id);
+		
+		void refresh_partition(unsigned int par_id);
+		template<class InputIterator, class T> bool search_FIFO(InputIterator first, InputIterator last, const T& val);
+		bool search_multiFIFO(unsigned int par_id, unsigned int cur_level);
+		void run_RefreshSim(void);
+		void reset_retention(unsigned int par_id, unsigned int cur_rg);
+		void decay_retention(unsigned int par_id, unsigned int cur_rg, _SysTick_unit decay_time);
+		void decay_partition(unsigned int par_id);
+
+		// Common functionalities for every approach
+ 		void acc_validBusTime(_SysTick_unit valid_min, _SysTick_unit valid_max);
+	
+		// Functions for evaluation
+		double calc_netBandwidth(void);
+		bool verify_DataIntegrity(void);
+		void showEval(void);
+};
+
+// Approach 2: Decay-based refresh counter
+class RefreshCounter : private RetentionTimer {
+	private:
+		// For access pattern
+		std::vector<std::string> request_type; 
+		std::vector<unsigned int> request_size, target_rg;
+		std::vector<_SysTick_unit> request_time;
+		
+		struct Bank_t bank[BANK_NUM];	
+		int HyperPeriod_cnt;
+
+		// Components for second approach
+		partition_fifo RG_FIFO[PARTITION_NUM];
+		_SysTick_unit access_invalid[PARTITION_NUM]; // determining the invalid access duratin within each sub-window, subject to tRFC
+		unsigned int query_partition;
+		unsigned int query_row_group;
+
+		// The parameters for evaluation
+		_SysTick_unit valid_bus_time;
+		unsigned long long int refresh_latency;	
+	
+	public:
+		RefreshCounter(_SysTick_unit &time_val, char *read_filename);
+		//~RefreshCounter(void);
+		void bank_init(int bank_id);
+		void view_bank(int bank_id);
+		
+		void refresh_row_group(int bank_id, int group_id);
+		void config_access_pattern(char *read_filename);
+		void pop_pattern(void);
 
 		// Second proposed approach
 		void accessed_checkpoint(unsigned int par_id);
@@ -136,7 +177,7 @@ class RefreshCounter : private RetentionTimer {
 		// Functions for evaluation
 		double calc_netBandwidth(void);
 		bool verify_DataIntegrity(void);
-		void showEval(int trial_num);
+		void showEval(void);
 };
 
 #endif // __REFRESH_COUNTER_H

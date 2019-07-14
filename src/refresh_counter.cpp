@@ -8,9 +8,7 @@ using std::cout;
 using std::cin;
 using std::endl;
 
-int solution_x;
-
-_SysTick_unit	round_length = (_SysTick_unit) tREFW;
+extern _SysTick_unit round_length;
 
 template<class InputIterator, class T>
 bool RefreshCounter::search_FIFO(InputIterator first, InputIterator last, const T& val)
@@ -60,16 +58,18 @@ RefreshCounter::RefreshCounter(_SysTick_unit &time_val, char *read_filename)
 	// Configuring the access patterns
 	config_access_pattern(read_filename);
 
-	// Initially, there is no data stored inside the DRAM
-	// hence the invalid access duration of every sub-window is zero ns
-	for(int i = 0; i < (int) PARTITION_NUM; i++)
+	// 1) Initially, there is no data stored inside the DRAM
+	//    hence the invalid access duration of every sub-window is zero ns
+	// 2) Initialisation of entire partition FIFOs
+	for(int i = 0; i < (int) PARTITION_NUM; i++) {
 		access_invalid[i] = (_SysTick_unit) 0;
 
-	// Initialisation of evaluation parameters
-	for(int i = 0; i < (int) SOLUTION_NUM; i++) {
-		refresh_latency[i] = (unsigned long long) 0;
-		valid_bus_time[i] = (_SysTick_unit) 0;
+		RG_FIFO[i].cur_length = 0;
 	}
+
+	// Initialisation of evaluation parameters
+	refresh_latency = (unsigned long long) 0;
+	valid_bus_time = (_SysTick_unit) 0;
 }
 
 // Initialising the value of all rows of any bank, with random value
@@ -94,19 +94,6 @@ void RefreshCounter::view_bank(int bank_id)
 	cout << "=================================" << endl;
 }
 
-void RefreshCounter::update_row_group(int bank_id, int group_id, UpdateOp operation)
-{
-	if(operation = (UpdateOp) INC)
-		bank[bank_id].access[group_id] += 0x01;
-	else // (UpdateOp) DEC
-		bank[bank_id].access[group_id] -= 0x01;
-}
-
-void RefreshCounter::refresh_row_group(int bank_id, int group_id)
-{
-	bank[bank_id].access[group_id] += 0x02;	
-}
-
 void RefreshCounter::pop_pattern(void)
 {
 	request_type.pop_back(); 
@@ -125,6 +112,7 @@ void RefreshCounter::run_RefreshSim(void)
 		if((int) temp == (int) round_length) {
 			HyperPeriod_cnt += 1;
 			cout << "================== Refresh Window_" << HyperPeriod_cnt << " ================" << endl;
+			printf("RefreshTime: 0 ns\r\n");
 		}
 	}
 }
@@ -150,7 +138,7 @@ void  RefreshCounter::accessed_checkpoint(unsigned int par_id)
 		(request_time.size() != 0) && 
 		(request_time.back() >= access_valid_min && request_time.back() <= access_valid_max)
 	) {
-	  cout << "Access_valid(min,max) = " << "(" << access_valid_min - (HyperPeriod_cnt - 1)*round_length << ", " 
+	  cout << "\tAccess_valid(min,max) = " << "(" << access_valid_min - (HyperPeriod_cnt - 1)*round_length << ", " 
 	       << access_valid_max - (HyperPeriod_cnt - 1)*round_length << "); "
 	       << "Access_invalid: " << access_invalid[par_id] << endl;
 
@@ -176,7 +164,7 @@ void  RefreshCounter::accessed_checkpoint(unsigned int par_id)
 				reset_retention(query_partition, query_row_group);
 			}
 			
-			cout << "\t" << request_time.back() << "ns -> " << request_type.back().c_str() << " request ("
+			cout << "\t\t" << request_time.back() << "ns -> " << request_type.back().c_str() << " request ("
 			     << request_size.back() << "-Byte) targetting to row group (" << target_rg.back() << ")" << endl;
 			pop_pattern(); 
 		}
@@ -185,7 +173,7 @@ void  RefreshCounter::accessed_checkpoint(unsigned int par_id)
 		       // Note that, the real accessed timing need to depend on the command scheduler, 
 		       // we will leave as future work after merging this refresh mechansim into existing DRAM simulator
 		       request_time[request_time.size() - 1 - invalid_request_cnt] = sub_window_max + 1 + invalid_request_cnt;
-		       cout << "\t\t#Procrastinating Request's ideal access time to " << request_time[request_time.size() - 1 - invalid_request_cnt] << " ns (target row group: " 
+		       cout << "\t\t\t#Procrastinating Request's ideal access time to " << request_time[request_time.size() - 1 - invalid_request_cnt] << " ns (target row group: " 
 			    << target_rg[target_rg.size() - 1 - invalid_request_cnt] << ")" << endl;
 		       invalid_request_cnt -= 1;
 		}
@@ -197,7 +185,7 @@ void  RefreshCounter::accessed_checkpoint(unsigned int par_id)
 		if(i == par_id) refresh_partition(i); 
 		else            decay_partition(i);
 	}
-	RG_FIFO[par_id].cur_length = cur_level;
+	RG_FIFO[par_id].cur_length = cur_level; 
 	access_invalid[par_id] = RG_FIFO[par_id].cur_length * (unsigned int) tRFC;
 }
 
@@ -220,32 +208,22 @@ void RefreshCounter::decay_partition(unsigned int par_id)
 }
 void RefreshCounter::acc_validBusTime(_SysTick_unit valid_min, _SysTick_unit valid_max)
 {
-	if(solution_x == (int) SOLUTION_1) {
-		valid_bus_time[(int) SOLUTION_1] += (valid_max - valid_min);
-	}
-	else if(solution_x == (int) SOLUTION_2) {
-		valid_bus_time[(int) SOLUTION_2] += (valid_max - valid_min);
-	}
+	valid_bus_time += (valid_max - valid_min);
 }
 
 double RefreshCounter::calc_netBandwidth(void)
 {
 	_SysTick_unit elapsed_time = (HyperPeriod_cnt - 1) * round_length + round_time;
 
-	if(solution_x == (int) SOLUTION_1) {
-		return (double) (valid_bus_time[(int) SOLUTION_1] / elapsed_time);
-	}
-	else if(solution_x == (int) SOLUTION_2) {
-		return (double) valid_bus_time[(int) SOLUTION_2] / (double) elapsed_time;
-	}
+	return (double) valid_bus_time / (double) elapsed_time;
 }
 
-void RefreshCounter::showEval(int trial_num)
+void RefreshCounter::showEval(void)
 {
 	_SysTick_unit elapsed_time = (HyperPeriod_cnt - 1) * round_length + round_time;
 	
-	printf("The refresh-induced access latency under approach_%d: %llu ns\r\n", trial_num, refresh_latency[trial_num]);
-	printf("The net bandwidth under approach_%d: %llu (ns) / %llu (ns) = %lf\%\r\n", trial_num, valid_bus_time[trial_num], elapsed_time, calc_netBandwidth() * 100);
+	printf("The refresh-induced access latency: %llu ns\r\n", refresh_latency);
+	printf("The net bandwidth: %llu (ns) / %llu (ns) = %lf\%\r\n", valid_bus_time, elapsed_time, calc_netBandwidth() * 100);
 }
 
 /**
@@ -254,7 +232,7 @@ void RefreshCounter::showEval(int trial_num)
 **/   	
 void RefreshCounter::refresh_partition(unsigned int par_id)
 {
-	refresh_latency[1] += access_invalid[par_id];
+	refresh_latency += access_invalid[par_id];
 
 	// After refreshing, the retention time of all row groups in the same partition become 64 ms 
 	unsigned int Ref_cnt = RG_FIFO[par_id].cur_length;
@@ -302,7 +280,7 @@ _SysTick_unit RetentionTimer::time_unit_config(_SysTick_unit &time_val)
 _SysTick_unit RetentionTimer::time_update(void)
 {
 	round_time += time_interval;
-	round_time = (round_time == (int) round_length + time_interval) ? time_interval : round_time;
+	round_time = (round_time == (_SysTick_unit) round_length + time_interval) ? time_interval : round_time;
 	return round_time;
 } 
 
