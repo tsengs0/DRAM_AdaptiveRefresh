@@ -1,0 +1,127 @@
+#include <iostream>
+#include <cstdio>
+#include <cstdlib>
+#include <algorithm>
+#include "../inc/refresh_counter.h"
+
+using std::cout;
+using std::cin;
+using std::endl;
+
+extern _SysTick_unit round_length;
+
+AccessRefreshCounter::AccessRefreshCounter(_SysTick_unit &time_val, char *read_filename)
+               : RetentionTimer(time_val) // Initialisation list
+{
+	for(int i = 0; i < (int) BANK_NUM; i++) {
+		bank_init(i);
+		//view_bank(i);
+	}
+	
+	// Since the simulator is designed to be run for certain number of refresh windows (hper-period).
+	// Thus, a counter to record the currently elapsed refresh window is necessary.
+	HyperPeriod_cnt = (int) 1;
+
+	// Configuring the access patterns
+	config_access_pattern(read_filename);
+
+	// 1) Initially, there is no data stored inside the DRAM
+	//    hence the invalid access duration of every sub-window is zero ns
+	for(int i = 0; i < (int) SUB_WINDOW_NUM; i++)
+		access_invalid[i] = (_SysTick_unit) 0;
+
+	// Initialisation of evaluation parameters
+	refresh_latency = (unsigned long long) 0;
+	valid_bus_time = (_SysTick_unit) 0;
+}
+
+// Initialising the value of all rows of any bank, with random value
+void AccessRefreshCounter::bank_init(int bank_id)
+{
+	for(unsigned int i = 0; i < (unsigned int) ROW_NUM; i++) 
+		bank[bank_id].row[i] = i;
+	
+	for(unsigned int i = 0; i < (unsigned int) ROW_GP_NUM; i++)
+		bank[bank_id].access[i] = 0x00;
+
+	bank[bank_id].refresh_flag = (unsigned int) 0;
+}
+
+void AccessRefreshCounter::update_row_group(int bank_id, int group_id, UpdateOp operation)
+{
+	if(operation = (UpdateOp) INC)
+		bank[bank_id].access[group_id] += 0x01;
+	else // (UpdateOp) DEC
+		bank[bank_id].access[group_id] -= 0x01;
+}
+
+void AccessRefreshCounter::refresh_row_group(int bank_id, int group_id)
+{
+	bank[bank_id].access[group_id] += 0x02;	
+}
+
+void AccessRefreshCounter::run_RefreshSim(void)
+{
+	printf("RefreshTime: 0 ns\r\n");
+	while(HyperPeriod_cnt <= (int) HYPER_PERIOD) {
+		_SysTick_unit temp = time_update();
+	//	accessed_checkpoint((temp / time_interval) - 1); 
+		printf("RefreshTime: %u ns\r\n", temp); 
+		if((int) temp == (int) round_length) {
+			HyperPeriod_cnt += 1;
+			cout << "================== Refresh Window_" << HyperPeriod_cnt << " ================" << endl;
+			printf("RefreshTime: 0 ns\r\n");
+		}
+	}
+}
+
+/**
+  * @brief Checking if there was any newl arrival memory access within the sub-window of certain partition
+  * @param Partition ID to decide the sub-window
+**/   	
+void Access RefreshCounter::accessed_checkpoint(unsigned int sub_id)
+{
+	// Identifying the valid access duration within the partition sub-window
+	_SysTick_unit sub_window_max   = (HyperPeriod_cnt - 1) * round_length + round_time - 1;
+	_SysTick_unit access_valid_max = (HyperPeriod_cnt - 1) * round_length + round_time - access_invalid[par_id] - 1;
+	_SysTick_unit access_valid_min = (HyperPeriod_cnt - 1) * round_length + round_time - time_interval;
+	unsigned int invalid_request_cnt; invalid_request_cnt = (unsigned int) 0;
+	unsigned int cur_level = RG_FIFO[par_id].cur_length;
+
+	// Accumulating the invalid bus utilising time
+	acc_validBusTime(access_valid_min, access_valid_max);	
+
+	// Just for print out the valid and invalid durations for debugging
+	if(
+		(request_time.size() != 0) && 
+		(request_time.back() >= access_valid_min && request_time.back() <= access_valid_max)
+	) {
+	  cout << "\tAccess_valid(min,max) = " << "(" << access_valid_min - (HyperPeriod_cnt - 1)*round_length << ", " 
+	       << access_valid_max - (HyperPeriod_cnt - 1)*round_length << "); "
+	       << "Access_invalid: " << access_invalid[par_id] << endl;
+
+	}
+	while(
+		(request_time.size() != 0) && 
+		(request_time.back() >= access_valid_min && request_time.back() <= sub_window_max )
+	) {
+		// Enqueuing the arrival requests into partition FIFO if it arrived at valid duration
+		if(request_time.back() <= access_valid_max) {
+			// If the arrival request has been recorded inside any partition FIFO, just skip the following step
+			if(search_multiFIFO(par_id, cur_level) == false) {
+				RG_FIFO[par_id].row_group[cur_level] = target_rg.back();
+				RG_FIFO[par_id].access_size[cur_level] = request_size.back(); 
+				RG_FIFO[par_id].access_type[cur_level].assign(request_type.back());
+				
+				// Reset the retention time of newly arrival request's corresponding row group
+				reset_retention(par_id, cur_level);
+				cur_level += 1; 
+			}
+			else { // If the newly arrival request has been equeued in any partition FIFO
+			       // just refreshing its corresponding row group by resetting its retentin time to64 ms
+				reset_retention(query_partition, query_row_group);
+			}
+			
+			cout << "\t\t" << request_time.back() << "ns -> " << request_type.back().c_str() << " request ("
+			     << request_size.back() << "-Byte) targetting to row group (" << target_rg.back() << ")" << endl;
+			pop_pattern(); 

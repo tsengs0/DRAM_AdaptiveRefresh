@@ -53,7 +53,7 @@ RefreshCounter::RefreshCounter(_SysTick_unit &time_val, char *read_filename)
 	
 	// Since the simulator is designed to be run for certain number of refresh windows (hper-period).
 	// Thus, a counter to record the currently elapsed refresh window is necessary.
-	HyperPeriod_cnt = (int) 1;
+	HyperPeriod_cnt = (unsigned int) 1;
 
 	// Configuring the access patterns
 	config_access_pattern(read_filename);
@@ -61,7 +61,7 @@ RefreshCounter::RefreshCounter(_SysTick_unit &time_val, char *read_filename)
 	// 1) Initially, there is no data stored inside the DRAM
 	//    hence the invalid access duration of every sub-window is zero ns
 	// 2) Initialisation of entire partition FIFOs
-	for(int i = 0; i < (int) PARTITION_NUM; i++) {
+	for(unsigned int i = 0; i < (unsigned int) PARTITION_NUM; i++) {
 		access_invalid[i] = (_SysTick_unit) 0;
 
 		RG_FIFO[i].cur_length = 0;
@@ -75,11 +75,11 @@ RefreshCounter::RefreshCounter(_SysTick_unit &time_val, char *read_filename)
 // Initialising the value of all rows of any bank, with random value
 void RefreshCounter::bank_init(int bank_id)
 {
-	for(unsigned int i = 0; i < (unsigned int) ROW_NUM; i++) 
-		bank[bank_id].row[i] = i;
-	
-	for(unsigned int i = 0; i < (unsigned int) ROW_GP_NUM; i++)
-		bank[bank_id].access[i] = 0x00;
+	for(unsigned int i = 0; i < (unsigned int) RG_PER_BANK_COUNT; i++) {
+	  bank[bank_id].row_group[i].access_cnt = 0x00;
+	  for(unsigned int j = 0; j < (unsigned int) ROW_GP_NUM; j++)
+		bank[bank_id].row_group[i].row[j] = j;
+	}
 
 	bank[bank_id].refresh_flag = (unsigned int) 0;
 }
@@ -87,11 +87,6 @@ void RefreshCounter::bank_init(int bank_id)
 // Showing all value inside one bank
 void RefreshCounter::view_bank(int bank_id)
 {
-	cout << "=================================" << endl;
-	for(unsigned int i = 0; i < (unsigned int) ROW_NUM; i++)
-		cout << "Bank[" << bank_id << "].row[" << i
-			  << "]: " << bank[bank_id].row[i] << endl;
-	cout << "=================================" << endl;
 }
 
 void RefreshCounter::pop_pattern(void)
@@ -283,4 +278,3 @@ _SysTick_unit RetentionTimer::time_update(void)
 	round_time = (round_time == (_SysTick_unit) round_length + time_interval) ? time_interval : round_time;
 	return round_time;
 } 
-

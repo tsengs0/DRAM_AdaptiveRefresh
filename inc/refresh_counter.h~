@@ -35,8 +35,8 @@
 #define HYPER_PERIOD 3
 #define SOLUTION_NUM 2
 typedef unsigned int _SysTick_unit;
-typedef unsigned int _Row_t;
-typedef unsigned char _AccessCounter; // only last 3-bit are valid
+typedef unsigned int Row_t;
+typedef unsigned char RowGroup_t; // only last 3-bit are valid
 typedef char UpdateOp;
 
 enum {
@@ -44,25 +44,13 @@ enum {
 	DEC = 1
 };
 
-typedef struct Row_Group {
-	_Row_t row[ROW_GP_NUM];
-	_AccessCounter access_cnt;
-} _RowGroup;
-
-typedef struct Bank_t {
+struct Bank_t {
 	// For ease of simulation, assume there is only one 1-bit cell inside each row
-	_RowGroup row_group[RG_PER_BANK_COUNT];
+	Row_t row[ROW_NUM]; 
 	unsigned int refresh_flag; // to track how many rows have already been refreshed
 
-} _Bank;
-
-typedef struct AccessTable_t {
-	unsigned int access_row[RG_PER_BANK_COUNT];
-	unsigned int cur_length;
-	unsigned int access_size[RG_PER_BANK_COUNT];
-	std::string access_type[RG_PER_BANK_COUNT];
-	_SysTick_unit RowGroup_retention[RG_PER_BANK_COUNT];
-} _AccessTable;
+	RowGroup_t access[ROW_GP_NUM]; 
+};
 
 typedef struct Partition_fifo_t {
 	// FIFO for each partition
@@ -101,17 +89,14 @@ class AccessRefreshCounter : private RetentionTimer {
 		std::vector<std::string> request_type; 
 		std::vector<unsigned int> request_size, target_rg;
 		std::vector<_SysTick_unit> request_time;
-	
-		_RowGroup row_group[RG_PER_BANK_COUNT];
-		_AccessTable access_track;
-		unsigned int query_row_group;
-		unsigned int HyperPeriod_cnt;
+		
+		struct Bank_t bank[BANK_NUM];	
+		int HyperPeriod_cnt;
 
 		_SysTick_unit access_invalid[SUB_WINDOW_NUM]; // determining the invalid access duratin within each sub-window, subject to tRFC
 
 		// The parameters for evaluation
 		_SysTick_unit valid_bus_time;
-		_SysTick_unit lastRFC_time;
 		unsigned long long int refresh_latency;	
 	
 	public:
@@ -125,16 +110,16 @@ class AccessRefreshCounter : private RetentionTimer {
 		void pop_pattern(void);
 
 		// First proposed approach
-		void update_row_group(unsigned int group_id, UpdateOp operation);
-		void accessed_checkpoint(unsigned int sub_id);
+		void update_row_group(int bank_id, int group_id, UpdateOp operation);
+		void accessed_checkpoint(unsigned int par_id);
 		
-		void refresh_partition(unsigned int sub_id);
+		void refresh_partition(unsigned int par_id);
 		template<class InputIterator, class T> bool search_FIFO(InputIterator first, InputIterator last, const T& val);
-		bool search_multiFIFO(unsigned int sub_id, unsigned int cur_level);
+		bool search_multiFIFO(unsigned int par_id, unsigned int cur_level);
 		void run_RefreshSim(void);
-		void reset_retention(unsigned int sub_id, unsigned int cur_rg);
-		void decay_retention(unsigned int sub_id, unsigned int cur_rg, _SysTick_unit decay_time);
-		void decay_partition(unsigned int sub_id);
+		void reset_retention(unsigned int par_id, unsigned int cur_rg);
+		void decay_retention(unsigned int par_id, unsigned int cur_rg, _SysTick_unit decay_time);
+		void decay_partition(unsigned int par_id);
 
 		// Common functionalities for every approach
  		void acc_validBusTime(_SysTick_unit valid_min, _SysTick_unit valid_max);
@@ -154,7 +139,7 @@ class RefreshCounter : private RetentionTimer {
 		std::vector<_SysTick_unit> request_time;
 		
 		struct Bank_t bank[BANK_NUM];	
-		unsigned int HyperPeriod_cnt;
+		int HyperPeriod_cnt;
 
 		// Components for second approach
 		partition_fifo RG_FIFO[PARTITION_NUM];
