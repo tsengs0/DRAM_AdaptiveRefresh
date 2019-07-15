@@ -234,6 +234,7 @@ void AccessRefreshCounter::update_row_group(unsigned int group_id, UpdateOp oper
 void AccessRefreshCounter::refresh_row_group(unsigned int group_id)
 {
 	cout << " Issuing refresh command toward row group " << group_id << endl;
+	refresh_latency += (_SysTick_unit) tRFC;
 	update_row_group(group_id, (UpdateOp) REF);
 }
 
@@ -250,4 +251,31 @@ void AccessRefreshCounter::decay_retention(unsigned int group_id, _SysTick_unit 
 void AccessRefreshCounter::acc_validBusTime(_SysTick_unit valid_min, _SysTick_unit valid_max)
 {
 	valid_bus_time += (valid_max - valid_min);
+}
+
+bool AccessRefreshCounter::verify_DataIntegrity(void)
+{
+	unsigned int cur_level = access_track.cur_length;
+	for(unsigned int i = 0; i < cur_level; i++) {
+	  _SysTick_unit temp = access_track.RowGroup_retention[i];
+	  printf("RowGroup[%d]'s data-holding time since last access or refresh point is: %f ms\r\n", i, (float) temp/1000000);
+	   if(temp > (_SysTick_unit) tRetention) 
+	 return false;
+	}
+	return true;
+} 
+
+double AccessRefreshCounter::calc_netBandwidth(void)
+{
+	_SysTick_unit elapsed_time = (HyperPeriod_cnt - 1) * round_length + round_time;
+
+	return (double) valid_bus_time / (double) elapsed_time;
+}
+
+void AccessRefreshCounter::showEval(void)
+{
+	_SysTick_unit elapsed_time = (HyperPeriod_cnt - 1) * round_length + round_time;
+	
+	printf("The refresh-induced access latency: %llu ns\r\n", refresh_latency);
+	printf("The net bandwidth: %llu (ns) / %llu (ns) = %lf\%\r\n", valid_bus_time, elapsed_time, calc_netBandwidth() * 100);
 }

@@ -52,6 +52,12 @@ void sim_approach_1(void)
 	std::cout << "Running simulation: access-aware refresh counter" << std::endl << std::endl;
 	ddr3_refresh_1 -> run_RefreshSim();
 
+	// Show experimental result
+	ddr3_refresh_1 -> showEval();
+	if(ddr3_refresh_1 -> verify_DataIntegrity() == true)
+		std::cout << "The data integrity of all rows are kept." << std::endl;
+	else // certain row(s) was/were refreshed later than its/their retention time
+		std::cout << "The data integrity is not kept." << std::endl;
 }
 
 void sim_approach_2(void)
