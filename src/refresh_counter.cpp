@@ -75,13 +75,14 @@ RefreshCounter::RefreshCounter(_SysTick_unit &time_val, char *read_filename)
 // Initialising the value of all rows of any bank, with random value
 void RefreshCounter::bank_init(int bank_id)
 {
-	for(unsigned int i = 0; i < (unsigned int) RG_PER_BANK_COUNT; i++) {
+	/*for(unsigned int i = 0; i < (unsigned int) RG_PER_BANK_COUNT; i++) {
 	  bank[bank_id].row_group[i].access_cnt = 0x00;
 	  for(unsigned int j = 0; j < (unsigned int) ROW_GP_NUM; j++)
 		bank[bank_id].row_group[i].row[j] = j;
 	}
 
 	bank[bank_id].refresh_flag = (unsigned int) 0;
+	*/
 }
 
 // Showing all value inside one bank
@@ -100,11 +101,11 @@ void RefreshCounter::pop_pattern(void)
 void RefreshCounter::run_RefreshSim(void)
 {
 	printf("RefreshTime: 0 ns\r\n");
-	while(HyperPeriod_cnt <= (int) HYPER_PERIOD) {
+	while(HyperPeriod_cnt <= (unsigned int) HYPER_PERIOD) {
 		_SysTick_unit temp = time_update();
 		accessed_checkpoint((temp / time_interval) - 1); 
 		printf("RefreshTime: %u ns\r\n", temp); 
-		if((int) temp == (int) round_length) {
+		if((unsigned int) temp == (unsigned int) round_length) {
 			HyperPeriod_cnt += 1;
 			cout << "================== Refresh Window_" << HyperPeriod_cnt << " ================" << endl;
 			printf("RefreshTime: 0 ns\r\n");
@@ -201,6 +202,7 @@ void RefreshCounter::decay_partition(unsigned int par_id)
 	for(unsigned int i = 0; i < temp; i++)
 		decay_retention(par_id, i, decay_time);
 }
+
 void RefreshCounter::acc_validBusTime(_SysTick_unit valid_min, _SysTick_unit valid_max)
 {
 	valid_bus_time += (valid_max - valid_min);
