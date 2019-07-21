@@ -42,13 +42,13 @@ refresh_counter.o : $(SRC_DIR)/refresh_counter.$(SRCEXT) $(INC_DIR)/refresh_coun
 	mv *.o obj/
 
 run_1:
-	$(BIN_DIR)/$(APP) pattern/access_pattern.csv 1
+	$(BIN_DIR)/$(APP) pattern/access_pattern2.csv 1
 
 run_2:
-	$(BIN_DIR)/$(APP) pattern/access_pattern.csv 2
+	$(BIN_DIR)/$(APP) pattern/access_pattern2.csv 2
 
 run_all:
-	$(BIN_DIR)/$(APP) pattern/access_pattern.csv 3
+	$(BIN_DIR)/$(APP) pattern/access_pattern2.csv 3
 
 clean:
 	clear

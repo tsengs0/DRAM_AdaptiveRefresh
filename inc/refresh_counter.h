@@ -7,8 +7,6 @@
 #include<sstream>
 #include<vector>
 
-#define BANK_NUM 8
-#define ROW_NUM 32768
 #define REFRESH_COUNT 8192
 #define RG_PER_BANK REFRESH_COUNT
 #define ROW_GP_NUM (ROW_NUM / REFRESH_COUNT) // the number of rows in one refresh cycle
@@ -18,14 +16,18 @@
 // DRAM device configuration for approach 1
 #define SUB_WINDOW_NUM 4
 
-#define DDR3_1333x4Gb
+#define DDR3_1600x2Gb
 // Refer to Micron DDR3L-1333 (operating frequency: 1333 MHz)
-#ifdef DDR3_1333x4Gb
+#ifdef DDR3_1600x2Gb
+	#define BANK_NUM 8
+	#define ROW_NUM 16384
+	#define COLUMN_NUM 1024
+	#define DATA_WIDTH 16
 	#define tRetention 64000000 // 64000000 ns = 64000 us = 64 ms
 	#define tREFW tRetention 
 	#define tREFI 7812.5 // 7812.5 ns = 7.812 us
-	#define tRFC 260 // 260 ns
-#elif DDR3_1333x8Gb
+	#define tRFC 128 // 260 ns
+#elif DDR3_1600x2Gb
 	#define ROW_NUM 1
 #else
 	

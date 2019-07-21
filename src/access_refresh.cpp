@@ -186,18 +186,24 @@ void AccessRefreshCounter::accessed_checkpoint(unsigned int sub_id)
 		}
 	}
 	
-	printf("From round time %u ns to %u ns, there came row-group access(es):\r\n", round_time - (round_length / (_SysTick_unit) SUB_WINDOW_NUM), round_time);
-	for(unsigned int i = 0; i < accessed_rg.size(); i++) printf("\t\tRow Group: %u\r\n", access_track.access_row[accessed_rg[i]]);
+	//printf("From round time %u ns to %u ns, there came row-group access(es):\r\n", round_time - (round_length / (_SysTick_unit) SUB_WINDOW_NUM), round_time);
+	//for(unsigned int i = 0; i < accessed_rg.size(); i++) printf("\t\tRow Group: %u\r\n", access_track.access_row[accessed_rg[i]]);
 
 	// 1) Decrementing all row groups whose was not accessed within current sub-window
 	// 2) Refreshing row groups whose value of access counter is smaller than 1;
 	lastRFC_time = round_time; 
 	for(unsigned int i = 0; i < (unsigned int) cur_level; i++) {
 		// 1)
-		if(	accessed_rg.size() != 0 &&
+		if(	accessed_rg.size() != 0 ) {/*&&
 			search_RGCounter(&(access_track.access_row[accessed_rg[0]]), &(access_track.access_row[accessed_rg.back()]), access_track.access_row[i]) == false
-		) {
-			update_row_group(i, (UpdateOp) DEC);
+		) {*/
+			for(unsigned int j = 0; j < accessed_rg.size(); j++) {
+				if(access_track.access_row[ accessed_rg[j] ] == access_track.access_row[i]) {
+					update_row_group(i, (UpdateOp) DEC);
+					break;
+				}
+			}
+		
 		}
 
 		// 2)
@@ -269,7 +275,8 @@ double AccessRefreshCounter::calc_netBandwidth(void)
 {
 	_SysTick_unit elapsed_time = (HyperPeriod_cnt - 1) * round_length + round_time;
 
-	return (double) valid_bus_time / (double) elapsed_time;
+	return ((double) elapsed_time - (double) refresh_latency) / (double) elapsed_time; 
+	//return (double) valid_bus_time / (double) elapsed_time;
 }
 
 void AccessRefreshCounter::showEval(void)
@@ -277,5 +284,5 @@ void AccessRefreshCounter::showEval(void)
 	_SysTick_unit elapsed_time = (HyperPeriod_cnt - 1) * round_length + round_time;
 	
 	printf("The refresh-induced access latency: %llu ns\r\n", refresh_latency);
-	printf("The net bandwidth: %llu (ns) / %llu (ns) = %lf\%\r\n", valid_bus_time, elapsed_time, calc_netBandwidth() * 100);
+	printf("The net bandwidth: %llu (ns) / %llu (ns) = %lf\%\r\n", (elapsed_time - refresh_latency), elapsed_time, calc_netBandwidth() * 100);
 }

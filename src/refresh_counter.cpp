@@ -212,7 +212,8 @@ double RefreshCounter::calc_netBandwidth(void)
 {
 	_SysTick_unit elapsed_time = (HyperPeriod_cnt - 1) * round_length + round_time;
 
-	return (double) valid_bus_time / (double) elapsed_time;
+	return ((double) elapsed_time - (double) refresh_latency) / (double) elapsed_time; 
+	//return (double) valid_bus_time / (double) elapsed_time;
 }
 
 void RefreshCounter::showEval(void)
@@ -220,7 +221,7 @@ void RefreshCounter::showEval(void)
 	_SysTick_unit elapsed_time = (HyperPeriod_cnt - 1) * round_length + round_time;
 	
 	printf("The refresh-induced access latency: %llu ns\r\n", refresh_latency);
-	printf("The net bandwidth: %llu (ns) / %llu (ns) = %lf\%\r\n", valid_bus_time, elapsed_time, calc_netBandwidth() * 100);
+	printf("The net bandwidth: %llu (ns) / %llu (ns) = %lf\%\r\n", (elapsed_time - refresh_latency), elapsed_time, calc_netBandwidth() * 100);
 }
 
 /**

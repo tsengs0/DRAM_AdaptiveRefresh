@@ -32,32 +32,32 @@ void AccessRefreshCounter::config_access_pattern(char *read_filename)
         while(getline(stream,token,',')) {
             if(state == (short) REQUEST_TYPE) {
 		request_type.push_back(token.c_str());
-		cout << token.c_str() << ",";
+		//cout << token.c_str() << ",";
 	    }
             else if(state == (short) REQUEST_SIZE) {
 		request_size.push_back(atoll(token.c_str()));
-		cout << atoll(token.c_str()) << ",";
+		//cout << atoll(token.c_str()) << ",";
 	    }
             else if(state == (short) TARGET_RG) {
 		target_rg.push_back(atoll(token.c_str()));
-		cout << atoll(token.c_str()) << ",";
+		//cout << atoll(token.c_str()) << ",";
 	    }
             else { // if(state == (short) REQUEST_TIME) {
 		request_time.push_back(atoll(token.c_str()));
-		cout << atoll(token.c_str()) << ",";
+		//cout << atoll(token.c_str()) << ",";
 	    }
 	    state += 1;
         }
-        cout << endl;
+        //cout << endl;
     }
 
 	reverse(request_type.begin(), request_type.end());   // note: reverse iterators
 	reverse(request_size.begin(), request_size.end());   // note: reverse iterators
 	reverse(target_rg.begin(), target_rg.end());   // note: reverse iterators
 	reverse(request_time.begin(), request_time.end());   // note: reverse iterators
-	for(unsigned int i = 0; i < request_type.size(); i++) {
-		printf("Request_%d, %s, %dB, RG_%d, %u ns\r\n", i, request_type[i].c_str(), request_size[i], target_rg[i], request_time[i]);
-	}
+	//for(unsigned int i = 0; i < request_type.size(); i++) {
+	//	printf("Request_%d, %s, %dB, RG_%d, %u ns\r\n", i, request_type[i].c_str(), request_size[i], target_rg[i], request_time[i]);
+	//}
 
 	/*
 	sprintf(output_FileName,"Total_%s.%s.csv", argv[1], argv[2]);
@@ -97,32 +97,32 @@ void RefreshCounter::config_access_pattern(char *read_filename)
         while(getline(stream,token,',')) {
             if(state == (short) REQUEST_TYPE) {
 		request_type.push_back(token.c_str());
-		cout << token.c_str() << ",";
+		//cout << token.c_str() << ",";
 	    }
             else if(state == (short) REQUEST_SIZE) {
 		request_size.push_back(atoll(token.c_str()));
-		cout << atoll(token.c_str()) << ",";
+		//cout << atoll(token.c_str()) << ",";
 	    }
             else if(state == (short) TARGET_RG) {
 		target_rg.push_back(atoll(token.c_str()));
-		cout << atoll(token.c_str()) << ",";
+		//cout << atoll(token.c_str()) << ",";
 	    }
             else { // if(state == (short) REQUEST_TIME) {
 		request_time.push_back(atoll(token.c_str()));
-		cout << atoll(token.c_str()) << ",";
+		//cout << atoll(token.c_str()) << ",";
 	    }
 	    state += 1;
         }
-        cout << endl;
+        //cout << endl;
     }
 
 	reverse(request_type.begin(), request_type.end());   // note: reverse iterators
 	reverse(request_size.begin(), request_size.end());   // note: reverse iterators
 	reverse(target_rg.begin(), target_rg.end());   // note: reverse iterators
 	reverse(request_time.begin(), request_time.end());   // note: reverse iterators
-	for(unsigned int i = 0; i < request_type.size(); i++) {
-		printf("Request_%d, %s, %dB, RG_%d, %u ns\r\n", i, request_type[i].c_str(), request_size[i], target_rg[i], request_time[i]);
-	}
+	//for(unsigned int i = 0; i < request_type.size(); i++) {
+	//	printf("Request_%d, %s, %dB, RG_%d, %u ns\r\n", i, request_type[i].c_str(), request_size[i], target_rg[i], request_time[i]);
+	//}
 
 	/*
 	sprintf(output_FileName,"Total_%s.%s.csv", argv[1], argv[2]);
