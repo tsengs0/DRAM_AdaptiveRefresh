@@ -50,6 +50,19 @@ run_2:
 run_all:
 	$(BIN_DIR)/$(APP) pattern/access_pattern2.csv 3
 
+run_3:
+	$(BIN_DIR)/$(APP) pattern/test3.csv 3
+
+run_4:
+	$(BIN_DIR)/$(APP) pattern/test4.csv 3
+
+run_5:
+	$(BIN_DIR)/$(APP) pattern/test5.csv 3
+
+run_6:
+	$(BIN_DIR)/$(APP) pattern/test6.csv 3
+
+clean:
 clean:
 	clear
 	rm  obj/*.o

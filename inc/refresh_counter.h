@@ -150,6 +150,7 @@ class RefreshCounter : private RetentionTimer {
 		std::vector<std::string> request_type; 
 		std::vector<unsigned int> request_size, target_rg;
 		std::vector<_SysTick_unit> request_time;
+		std::vector<_MemMap> mem_map;
 		
 		_Bank bank[BANK_NUM];	
 		unsigned int HyperPeriod_cnt;
