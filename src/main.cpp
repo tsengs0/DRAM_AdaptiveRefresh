@@ -1,7 +1,5 @@
 #include <iostream>
 #include "../inc/refresh_counter.h"
-#include "../inc/mem_map.h"
-#include "../inc/main.h"
 
 _SysTick_unit round_length;
 _SysTick_unit RefreshInterval_1 = (_SysTick_unit) (tREFW / SUB_WINDOW_NUM);

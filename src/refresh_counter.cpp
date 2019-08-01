@@ -100,15 +100,21 @@ void RefreshCounter::pop_pattern(void)
 
 void RefreshCounter::run_RefreshSim(void)
 {
+#ifdef DEBUG 
 	printf("RefreshTime: 0 ns\r\n");
+#endif
 	while(HyperPeriod_cnt <= (unsigned int) HYPER_PERIOD) {
 		_SysTick_unit temp = time_update();
-		accessed_checkpoint((temp / time_interval) - 1); 
+		accessed_checkpoint((temp / time_interval) - 1);
+#ifdef DEBUG 
 		printf("RefreshTime: %u ns\r\n", temp); 
+#endif
 		if((unsigned int) temp == (unsigned int) round_length) {
 			HyperPeriod_cnt += 1;
+#ifdef DEBUG 
 			cout << "================== Refresh Window_" << HyperPeriod_cnt << " ================" << endl;
 			printf("RefreshTime: 0 ns\r\n");
+#endif
 		}
 	}
 }
@@ -134,9 +140,11 @@ void  RefreshCounter::accessed_checkpoint(unsigned int par_id)
 		(request_time.size() != 0) && 
 		(request_time.back() >= access_valid_min && request_time.back() <= access_valid_max)
 	) {
+#ifdef DEBUG 
 	  cout << "\tAccess_valid(min,max) = " << "(" << access_valid_min - (HyperPeriod_cnt - 1)*round_length << ", " 
 	       << access_valid_max - (HyperPeriod_cnt - 1)*round_length << "); "
 	       << "Access_invalid: " << access_invalid[par_id] << endl;
+#endif
 
 	}
 	while(
@@ -160,8 +168,10 @@ void  RefreshCounter::accessed_checkpoint(unsigned int par_id)
 				reset_retention(query_partition, query_row_group);
 			}
 			
+#ifdef DEBUG 
 			cout << "\t\t" << request_time.back() << "ns -> " << request_type.back().c_str() << " request ("
 			     << request_size.back() << "-Byte) targetting to row group (" << target_rg.back() << ")" << endl;
+#endif
 			pop_pattern(); 
 		}
 		else { // Procrastinating the arrival requests arriving at invalid duration
@@ -169,8 +179,10 @@ void  RefreshCounter::accessed_checkpoint(unsigned int par_id)
 		       // Note that, the real accessed timing need to depend on the command scheduler, 
 		       // we will leave as future work after merging this refresh mechansim into existing DRAM simulator
 		       request_time[request_time.size() - 1 - invalid_request_cnt] = sub_window_max + 1 + invalid_request_cnt;
+#ifdef DEBUG 
 		       cout << "\t\t\t#Procrastinating Request's ideal access time to " << request_time[request_time.size() - 1 - invalid_request_cnt] << " ns (target row group: " 
 			    << target_rg[target_rg.size() - 1 - invalid_request_cnt] << ")" << endl;
+#endif
 		       invalid_request_cnt -= 1;
 		}
 	}
@@ -244,7 +256,9 @@ bool RefreshCounter::verify_DataIntegrity(void)
 	  unsigned int cur_level = RG_FIFO[i].cur_length;
 	  for(unsigned int j = 0; j < cur_level; j++) {
 		_SysTick_unit temp = RG_FIFO[i].RowGroup_retention[j];
+#ifdef DEBUG 
 		printf("RG[%d].RowGroup[%d]'s data-holding time since last access or refresh point is: %f ms\r\n", i, j, (float) temp/1000000);
+#endif
 		if(temp > (_SysTick_unit) tRetention) 
 		  return false;
 	  }

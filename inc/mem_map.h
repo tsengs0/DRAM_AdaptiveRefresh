@@ -17,14 +17,6 @@ typedef unsigned char uint8_t;
 //  4, 4    | 256
 // ------------------------------
 	#define MEM_MAP_SEL_NUM 5 // Five memory mapping selection
-	uint8_t bi_bc_pattern[MEM_MAP_SEL_NUM][2] = {
-		{1, 1}, // 16-byte
-		{2, 1}, // 32-byte
-		{4, 1}, // 64-byte
-		{4, 2}, // 128-byte
-		{4, 4}  // 256-byte	
-	};
-	
 	enum pattern_index {
 		BI_INDEX = 0,
 		BC_INDEX = 1
@@ -41,14 +33,6 @@ typedef unsigned char uint8_t;
 //  2, 4    | 256
 // ------------------------------
 	#define MEM_MAP_SEL_NUM 5 // Five memory mapping selection
-	uint8_t bi_bc_pattern[MEM_MAP_SEL_NUM][2] = {
-		{1, 1}, // 16-byte (dummy even if it is undefined in the paper)
-		{1, 1}, // 32-byte
-		{2, 1}, // 64-byte
-		{4, 1}, // 128-byte
-		{4, 2}  // 256-byte	
-	};
-
 	enum pattern_index {
 		BI_INDEX = 0,
 		BC_INDEX = 1
@@ -62,7 +46,6 @@ enum MemMap_Selection {
 	REQUEST_128B,
 	REQUEST_256B
 };
-
 
 typedef struct MemMap_t {
 	uint8_t BI;

@@ -9,7 +9,7 @@ SRCEXT:= cpp
 
 APP= RefreshCounter
 
-all: file_config.o  main.o  mem_map.o  access_refresh.o refresh_counter.o 
+all: file_config.o  main.o mem_map.o access_refresh.o refresh_counter.o 
 	g++ $(CFLAG) -g -o $(APP) \
 			$(OBJ_DIR)/file_config.o \
 			$(OBJ_DIR)/main.o \
@@ -29,8 +29,8 @@ file_config.o: $(SRC_DIR)/file_config.$(SRCEXT) $(INC_DIR)/refresh_counter.h
 	$(CC) $(INC_DIR) $(CFLAG) -g -c $(SRC_DIR)/file_config.$(SRCEXT) 
 	mv *.o obj/
 
-mem_map.o : $(SRC_DIR)/mem_map.$(SRCEXT) $(INC_DIR)/mem_map.h 
-	$(CC) $(INC_DIR) $(CFLAG) -g -c $(SRC_DIR)/mem_map.$(SRCEXT)
+mem_map.o: $(SRC_DIR)/mem_map.$(SRCEXT) $(INC_DIR)/mem_map.h  
+	$(CC) $(INC_DIR) $(CFLAG) -g -c $(SRC_DIR)/mem_map.$(SRCEXT) 
 	mv *.o obj/
 
 access_refresh.o : $(SRC_DIR)/access_refresh.$(SRCEXT) $(INC_DIR)/refresh_counter.h 

@@ -80,15 +80,21 @@ void AccessRefreshCounter::view_bank(int bank_id)
 
 void AccessRefreshCounter::run_RefreshSim(void)
 {
+#ifdef DEBUG 
 	printf("RefreshTime: 0 ns\r\n");
+#endif
 	while(HyperPeriod_cnt <= (unsigned int) HYPER_PERIOD) {
 		_SysTick_unit temp = time_update();
 		accessed_checkpoint((temp / time_interval) - 1); 
+#ifdef DEBUG 
 		printf("RefreshTime: %u ns\r\n", temp); 
+#endif
 		if((unsigned int) temp == (unsigned int) round_length) {
 			HyperPeriod_cnt += 1;
+#ifdef DEBUG 
 			cout << "================== Refresh Window_" << HyperPeriod_cnt << " ================" << endl;
 			printf("RefreshTime: 0 ns\r\n");
+#endif
 		}
 	}
 }
@@ -141,8 +147,10 @@ void AccessRefreshCounter::accessed_checkpoint(unsigned int sub_id)
 				cur_level += 1; 
 			}
 			
+#ifdef DEBUG 
 			cout << "\t\t" << request_time.back() << "ns -> " << request_type.back().c_str() << " request ("
 			     << request_size.back() << "-Byte) targetting to row group (" << target_rg.back() << ")" << endl;
+#endif
 			pop_pattern(); 
 		}
 		else if(request_time.back() >= sub_window_min && request_time.back() < access_valid_min) { 
@@ -151,8 +159,10 @@ void AccessRefreshCounter::accessed_checkpoint(unsigned int sub_id)
 		       // Note that, the real accessed timing need to depend on the command scheduler, 
 		       // we will leave as future work after merging this refresh mechansim into existing DRAM simulator
 		       request_time.back() = sub_window_min  + invalid_request_cnt;
+#ifdef DEBUG 
 		       cout << "\t\t\t#Procrastinating Request's ideal access time to " << request_time.back() << " ns (target row group: " 
 			    << target_rg.back() << ")" << endl;
+#endif
 		       invalid_request_cnt += 1;
 
 			if(search_RGCounter(access_track.access_row, access_track.access_row + cur_level, target_rg.back()) == true) {
@@ -239,7 +249,9 @@ void AccessRefreshCounter::update_row_group(unsigned int group_id, UpdateOp oper
 
 void AccessRefreshCounter::refresh_row_group(unsigned int group_id)
 {
+#ifdef DEBUG 
 	cout << " Issuing refresh command toward row group " << group_id << endl;
+#endif
 	refresh_latency += (_SysTick_unit) tRFC;
 	update_row_group(group_id, (UpdateOp) REF);
 }
@@ -264,7 +276,9 @@ bool AccessRefreshCounter::verify_DataIntegrity(void)
 	unsigned int cur_level = access_track.cur_length;
 	for(unsigned int i = 0; i < cur_level; i++) {
 	  _SysTick_unit temp = access_track.RowGroup_retention[i];
+#ifdef DEBUG 
 	  printf("RowGroup[%d]'s data-holding time since last access or refresh point is: %f ms\r\n", i, (float) temp/1000000);
+#endif
 	   if(temp > (_SysTick_unit) tRetention) 
 	 return false;
 	}

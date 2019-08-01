@@ -6,6 +6,8 @@
 #include<string>
 #include<sstream>
 #include<vector>
+#include "mem_map.h"
+#include "main.h"
 
 #define REFRESH_COUNT 8192
 #define RG_PER_BANK REFRESH_COUNT
@@ -104,6 +106,7 @@ class AccessRefreshCounter : private RetentionTimer {
 		// For access pattern
 		std::vector<std::string> request_type; 
 		std::vector<unsigned int> request_size, target_rg;
+		std::vector<_MemMap> bi_bc;
 		std::vector<_SysTick_unit> request_time;
 	
 		_Bank bank[BANK_NUM];	
@@ -149,8 +152,8 @@ class RefreshCounter : private RetentionTimer {
 		// For access pattern
 		std::vector<std::string> request_type; 
 		std::vector<unsigned int> request_size, target_rg;
+		std::vector<_MemMap> bi_bc;
 		std::vector<_SysTick_unit> request_time;
-		std::vector<_MemMap> mem_map;
 		
 		_Bank bank[BANK_NUM];	
 		unsigned int HyperPeriod_cnt;

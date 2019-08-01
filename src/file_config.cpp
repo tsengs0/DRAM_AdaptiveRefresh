@@ -5,8 +5,9 @@ using namespace std;
 enum {
 	REQUEST_TYPE  = 0, // Column 1 in .CSV File => Access type (WR or RD)
 	REQUEST_SIZE  = 1, // Column 2 in .CSV File => Request Size of transaction (in unit of BYTE)
-	TARGET_RG     = 2, // Column 3 in .CSV File => Target row group
-	REQUEST_TIME  = 3  // Column 4 in .CSV File => The access timing
+	TARGET_RG     = 2, // Column 3 in .CSV File => Target row group(s)
+	BI_BC         = 3, // Column 3 in .CSV File => Target BI_BC combination
+	REQUEST_TIME  = 4  // Column 4 in .CSV File => The access timing
 };
 
 void AccessRefreshCounter::config_access_pattern(char *read_filename)
@@ -42,6 +43,14 @@ void AccessRefreshCounter::config_access_pattern(char *read_filename)
 		target_rg.push_back(atoll(token.c_str()));
 		//cout << atoll(token.c_str()) << ",";
 	    }
+            else if(state == (short) BI_BC) {
+		uint8_t temp[3]; // BI, BC, Start Bank
+		temp[0] = (uint8_t) atoi(token.c_str()); getline(stream, token, ',');
+		temp[1] = (uint8_t) atoi(token.c_str()); getline(stream, token, ',');
+		temp[2] = (uint8_t) atoi(token.c_str()); 
+		
+		bi_bc.push_back({temp[0], temp[1], temp[2]});
+	    }
             else { // if(state == (short) REQUEST_TIME) {
 		request_time.push_back(atoll(token.c_str()));
 		//cout << atoll(token.c_str()) << ",";
@@ -54,23 +63,13 @@ void AccessRefreshCounter::config_access_pattern(char *read_filename)
 	reverse(request_type.begin(), request_type.end());   // note: reverse iterators
 	reverse(request_size.begin(), request_size.end());   // note: reverse iterators
 	reverse(target_rg.begin(), target_rg.end());   // note: reverse iterators
+	reverse(bi_bc.begin(), bi_bc.end());   // note: reverse iterators
 	reverse(request_time.begin(), request_time.end());   // note: reverse iterators
-	//for(unsigned int i = 0; i < request_type.size(); i++) {
-	//	printf("Request_%d, %s, %dB, RG_%d, %u ns\r\n", i, request_type[i].c_str(), request_size[i], target_rg[i], request_time[i]);
-	//}
-
-	/*
-	sprintf(output_FileName,"Total_%s.%s.csv", argv[1], argv[2]);
-	ofstream ofs(output_FileName); 
-	ofs << file_index << ","  
-	    << rfj << ","
-	    << afj << ","
-	    << TargetResponse << ","
-	    << AverageResponse << ","
-	    << StandardDeviation << ","
-	    << energy << ","
-	    << miss_dline << endl;
-	*/
+#ifdef DEBUG
+	for(unsigned int i = 0; i < request_type.size(); i++) {
+		printf("Request_%d, %s, %dB, RG_%d, %d, %d, %d, %u ns\r\n", i, request_type[i].c_str(), request_size[i], target_rg[i], (int) bi_bc[i].BI, (int) bi_bc[i].BC, (int) bi_bc[i].start_bank, request_time[i]);
+	}
+#endif
 	ifs.close();
 }
 
@@ -107,6 +106,14 @@ void RefreshCounter::config_access_pattern(char *read_filename)
 		target_rg.push_back(atoll(token.c_str()));
 		//cout << atoll(token.c_str()) << ",";
 	    }
+            else if(state == (short) BI_BC) {
+		uint8_t temp[3]; // BI, BC, Start Bank
+		temp[0] = (uint8_t) atoi(token.c_str()); getline(stream, token, ',');
+		temp[1] = (uint8_t) atoi(token.c_str()); getline(stream, token, ',');
+		temp[2] = (uint8_t) atoi(token.c_str()); 
+		
+		bi_bc.push_back({temp[0], temp[1], temp[2]});
+	    }
             else { // if(state == (short) REQUEST_TIME) {
 		request_time.push_back(atoll(token.c_str()));
 		//cout << atoll(token.c_str()) << ",";
@@ -119,22 +126,12 @@ void RefreshCounter::config_access_pattern(char *read_filename)
 	reverse(request_type.begin(), request_type.end());   // note: reverse iterators
 	reverse(request_size.begin(), request_size.end());   // note: reverse iterators
 	reverse(target_rg.begin(), target_rg.end());   // note: reverse iterators
+	reverse(bi_bc.begin(), bi_bc.end());   // note: reverse iterators
 	reverse(request_time.begin(), request_time.end());   // note: reverse iterators
-	//for(unsigned int i = 0; i < request_type.size(); i++) {
-	//	printf("Request_%d, %s, %dB, RG_%d, %u ns\r\n", i, request_type[i].c_str(), request_size[i], target_rg[i], request_time[i]);
-	//}
-
-	/*
-	sprintf(output_FileName,"Total_%s.%s.csv", argv[1], argv[2]);
-	ofstream ofs(output_FileName); 
-	ofs << file_index << ","  
-	    << rfj << ","
-	    << afj << ","
-	    << TargetResponse << ","
-	    << AverageResponse << ","
-	    << StandardDeviation << ","
-	    << energy << ","
-	    << miss_dline << endl;
-	*/
+#ifdef DEBUG
+	for(unsigned int i = 0; i < request_type.size(); i++) {
+		printf("Request_%d, %s, %dB, RG_%d, %d, %d, %d, %u ns\r\n", i, request_type[i].c_str(), request_size[i], target_rg[i], (int) bi_bc[i].BI, (int) bi_bc[i].BC, (int) bi_bc[i].start_bank, request_time[i]);
+	}
+#endif
 	ifs.close();
 }
