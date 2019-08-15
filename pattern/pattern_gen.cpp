@@ -11,6 +11,8 @@
 
 using namespace std;
 
+extern uint8_t bi_bc_pattern[MEM_MAP_SEL_NUM][2];
+
 // Format of Test Pattern from RTMemController
 enum {
 	REQ_TIME = 0,
@@ -58,6 +60,11 @@ int main(int argc, char **argv)
   	unsigned rowShift = static_cast<unsigned> (log2( (unsigned) COLUMN_NUM * (unsigned) BANK_NUM));
   	unsigned rowMask = static_cast<unsigned> (ROW_NUM - 1) << rowShift; // 4096
  
+	if(argc != 3) {
+		cout << "Please give input filename and output filename" << endl;
+		return 0;
+	}
+
 	cout << "Reading " << argv[1] << endl;
 	// Reading the file
 	ifstream ifs(argv[1]);

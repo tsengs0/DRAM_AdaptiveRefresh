@@ -157,7 +157,7 @@ void AccessRefreshCounter::accessed_checkpoint(unsigned int sub_id)
 		       // Procrastinating the arrival requests arriving at invalid duration
 		       // Assuming those requested will be accesses at beginning of next sub-window. 
 		       // Note that, the real accessed timing need to depend on the command scheduler, 
-		       // we will leave as future work after merging this refresh mechansim into existing DRAM simulator
+		       // we will leave it as future work after merging this refresh mechansim into existing DRAM simulator
 		       request_time.back() = sub_window_min  + invalid_request_cnt;
 #ifdef DEBUG 
 		       cout << "\t\t\t#Procrastinating Request's ideal access time to " << request_time.back() << " ns (target row group: " 
@@ -209,9 +209,9 @@ void AccessRefreshCounter::accessed_checkpoint(unsigned int sub_id)
 		) {*/
 			for(unsigned int j = 0; j < accessed_rg.size(); j++) {
 				if(access_track.access_row[ accessed_rg[j] ] == access_track.access_row[i]) {
-					update_row_group(i, (UpdateOp) DEC);
+					update_row_group(i, (UpdateOp) DEC); 
 					break;
-				}
+				} 
 			}
 		
 		}
@@ -274,14 +274,17 @@ void AccessRefreshCounter::acc_validBusTime(_SysTick_unit valid_min, _SysTick_un
 bool AccessRefreshCounter::verify_DataIntegrity(void)
 {
 	unsigned int cur_level = access_track.cur_length;
+	double avg_refi; avg_refi = 0.0;
 	for(unsigned int i = 0; i < cur_level; i++) {
 	  _SysTick_unit temp = access_track.RowGroup_retention[i];
 #ifdef DEBUG 
 	  printf("RowGroup[%d]'s data-holding time since last access or refresh point is: %f ms\r\n", i, (float) temp/1000000);
 #endif
+	   avg_refi += (double) temp / 1000000;
 	   if(temp > (_SysTick_unit) tRetention) 
-	 return false;
+		return false;
 	}
+	printf("Average refresh interval (refresh rate regarding both auto-refresh and refresh-by-access)  is %f ms, with respect to %d row groups\r\n", avg_refi / (double) cur_level, cur_level);
 	return true;
 } 
 

@@ -252,6 +252,8 @@ void RefreshCounter::refresh_partition(unsigned int par_id)
 
 bool RefreshCounter::verify_DataIntegrity(void)
 {
+	double avg_refi; avg_refi = 0.0;
+	unsigned int total_refreshed_rg; total_refreshed_rg = 0;
 	for(unsigned int i = 0; i < (unsigned int) PARTITION_NUM; i++) {
 	  unsigned int cur_level = RG_FIFO[i].cur_length;
 	  for(unsigned int j = 0; j < cur_level; j++) {
@@ -259,10 +261,13 @@ bool RefreshCounter::verify_DataIntegrity(void)
 #ifdef DEBUG 
 		printf("RG[%d].RowGroup[%d]'s data-holding time since last access or refresh point is: %f ms\r\n", i, j, (float) temp/1000000);
 #endif
+		avg_refi += (double) temp / 1000000; 
+		total_refreshed_rg += 1;
 		if(temp > (_SysTick_unit) tRetention) 
 		  return false;
 	  }
 	}
+	printf("Average refresh interval (refresh rate regarding both auto-refresh and refresh-by-access)  is %f ms, with respect to %d row groups\r\n", avg_refi / (double) total_refreshed_rg, total_refreshed_rg);
 	return true;
 } 
 

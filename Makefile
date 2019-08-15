@@ -51,7 +51,7 @@ run_all:
 	$(BIN_DIR)/$(APP) pattern/access_pattern2.csv 3
 
 run_3:
-	$(BIN_DIR)/$(APP) pattern/test3.csv 3
+	$(BIN_DIR)/$(APP) pattern/test3.csv 1
 
 run_4:
 	$(BIN_DIR)/$(APP) pattern/test4.csv 3
@@ -62,7 +62,9 @@ run_5:
 run_6:
 	$(BIN_DIR)/$(APP) pattern/test6.csv 3
 
-clean:
+run_combinedTrace2:
+	$(BIN_DIR)/$(APP) pattern/combinedTrace2.csv 3
+
 clean:
 	clear
 	rm  obj/*.o
