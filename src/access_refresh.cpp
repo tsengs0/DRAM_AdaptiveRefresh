@@ -208,7 +208,7 @@ void AccessRefreshCounter::accessed_checkpoint(unsigned int sub_id)
 			search_RGCounter(&(access_track.access_row[accessed_rg[0]]), &(access_track.access_row[accessed_rg.back()]), access_track.access_row[i]) == false
 		) {*/
 			for(unsigned int j = 0; j < accessed_rg.size(); j++) {
-				if(access_track.access_row[ accessed_rg[j] ] == access_track.access_row[i]) {
+				if(access_track.access_row[ accessed_rg[j] ] != access_track.access_row[i]) {
 					update_row_group(i, (UpdateOp) DEC); 
 					break;
 				} 
@@ -238,13 +238,16 @@ void AccessRefreshCounter::update_row_group(unsigned int group_id, UpdateOp oper
 		decay_retention(group_id, (_SysTick_unit) tRetention / (_SysTick_unit) SUB_WINDOW_NUM); // for verification
 	}
 	else if(operation == (UpdateOp) REF) {
-		access_track.access_cnt[group_id] += 0x02;
+		access_track.access_cnt[group_id] = 0x02;
 		reset_retention(group_id); // for verification
 	}
 	else {
 		cout << "Undefined update-operation is issued" << endl;
 		exit(1);
 	}
+
+	// Setting the upper bound of counter to 0x02 only.
+	if(access_track.access_cnt[group_id] > 0x02) access_track.access_cnt[group_id] = 0x02;
 }
 
 void AccessRefreshCounter::refresh_row_group(unsigned int group_id)
