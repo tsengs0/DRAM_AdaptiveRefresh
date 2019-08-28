@@ -230,7 +230,8 @@ void AccessRefreshCounter::accessed_checkpoint(unsigned int sub_id)
 void AccessRefreshCounter::update_row_group(unsigned int group_id, UpdateOp operation)
 {
 	if(operation == (UpdateOp) INC) {
-		access_track.access_cnt[group_id] += 0x01;
+		//access_track.access_cnt[group_id] += 0x01;
+		access_track.access_cnt[group_id] = 0x03;
 		reset_retention(group_id); // for verification
 	}
 	else if(operation == (UpdateOp) DEC) {
@@ -238,7 +239,8 @@ void AccessRefreshCounter::update_row_group(unsigned int group_id, UpdateOp oper
 		decay_retention(group_id, (_SysTick_unit) tRetention / (_SysTick_unit) SUB_WINDOW_NUM); // for verification
 	}
 	else if(operation == (UpdateOp) REF) {
-		access_track.access_cnt[group_id] = 0x02;
+		//access_track.access_cnt[group_id] = 0x02;
+		access_track.access_cnt[group_id] = 0x03;
 		reset_retention(group_id); // for verification
 	}
 	else {
@@ -247,7 +249,8 @@ void AccessRefreshCounter::update_row_group(unsigned int group_id, UpdateOp oper
 	}
 
 	// Setting the upper bound of counter to 0x02 only.
-	if(access_track.access_cnt[group_id] > 0x02) access_track.access_cnt[group_id] = 0x02;
+	//if(access_track.access_cnt[group_id] > 0x02) access_track.access_cnt[group_id] = 0x02;
+	if(access_track.access_cnt[group_id] > 0x03) access_track.access_cnt[group_id] = 0x03;
 }
 
 void AccessRefreshCounter::refresh_row_group(unsigned int group_id)
