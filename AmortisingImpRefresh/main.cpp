@@ -28,18 +28,23 @@ int main(int argc, char **argv)
 	double refresh_percent; 
 	ExportResult *res_csv;
 	eval_metrics res;
-	if(argc != 5) {
+	if(argc != 6) {
 		cout << "1) Please define the number of sub-refresh windows" << endl;
 		cout << "2) Please give the demanded percentage of refresh overhead over one tREFW" << endl;
 		cout << "3) Please give the filename of .CSV file where the result will be written to" << endl;
-		cout << "4) Please decide whether print out the label at the first line of .CSV file or not. (Y/N)" << endl;
+		cout << "4) Please decide whether to print out label at the first line of .CSV file or not. (Y/N)" << endl;
+		cout << "5) Please decide whether to print out banswidt or not. (Y/N)" << endl;
 		exit(1);
 	}
 
-	if(argv[4][0] == 'Y' )
-		res_csv = new ExportResult(argv[3], (bool) true);
-	else if(argv[4][0] == 'N')
-		res_csv = new ExportResult(argv[3], (bool) false);
+	if(argv[4][0] == 'Y' ) {
+		(argv[5][0] == 'Y') ? res_csv = new ExportResult(argv[3], (bool) true, (bool) true):
+				      res_csv = new ExportResult(argv[3], (bool) true, (bool) false);
+	}
+	else if(argv[4][0] == 'N') {
+		(argv[5][0] == 'Y') ? res_csv = new ExportResult(argv[3], (bool) false, (bool) true):
+				      res_csv = new ExportResult(argv[3], (bool) false, (bool) false);
+	}
 	else {
 		cout << "Undefined label_enable command was given" << endl;
 		exit(1);
@@ -122,22 +127,30 @@ int main(int argc, char **argv)
 	unsigned long temp = UpperBound*CheckNum + calc_tRFC_ap(remain_rows);
 	//unsigned long temp_1 = floor(((tREFW/CheckNum) - UpperBound)/L_req)*L_req*CheckNum;
 	unsigned long temp_1 = floor((float) x_prime / (float) BI)*CheckNum;
+	double bandwidth_t = ((double) temp_1*64/(double) pow(2,20))*1000.0/64.0;
 	//cout << "Refresh Overhead in one tREFW: " << temp
 	//     << " cycles, Total response time for all requests: " << temp_1*L_req << " cycles" << endl
 	//     << "(Ref+Tran)-tREFW: " << temp + temp_1 - tREFW << " cycles (should be < 1)" << endl;
-	cout << "Minimum Bandwidth: " << ((double) temp_1*64/(double) pow(2,20))*1000.0/64.0
+	
+	/*
+	cout << "Minimum Bandwidth: " << bandwidth_t
 	     << " MiB/s @ RefreshOverhead_" << fixed <<  setprecision(1) << refresh_percent << "% (" 
 	     << i << " refreshed rows, " << i << "*" << CheckNum << " cycles)" << endl;
+	*/
 
-/*
 	// Export results to .CSV file
 	res.bounded_rows = (unsigned long) i; 
 	res.bi = (unsigned short) BI;
-	res.bounded_rqst = (unsigned long) ceil(i/(int) BI);
+	res.bounded_rqst = (unsigned long) temp_1;
 	res.refresh_overhead = (double) refresh_percent;
 	res.utilisation = (double) ceil(i/((int) BI))*100/(PreNum*CheckNum);
-	res_csv -> write_oneCase(&res);
-*/
+	res.bandwidth = bandwidth_t;
+	
+	if(argv[5][0] == 'N')
+		res_csv -> write_oneCase(&res);
+	else
+		res_csv -> write_oneCaseBW(&res);
+
 	return 0;
 }
 

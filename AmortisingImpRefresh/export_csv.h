@@ -21,6 +21,7 @@ typedef struct Eval_Metrics {
 	unsigned long bounded_rqst; // requests
 	double refresh_overhead;    // %
 	double utilisation;         // %
+	double bandwidth;	    // MiB/s
 } eval_metrics;
 
 class ExportResult {
@@ -29,16 +30,19 @@ class ExportResult {
 	ofstream *ofs;
 
 	public:
-	ExportResult(char *filename, bool label_en);
+	ExportResult(char *filename, bool label_en, bool printBW_en);
 	//~ExportResult(void);
 	void write_oneCase(eval_metrics *res);
+	void write_oneCaseBW(eval_metrics *res);
 };
 
-ExportResult::ExportResult(char *filename, bool label_en)
+ExportResult::ExportResult(char *filename, bool label_en, bool printBW_en)
 {
 	ofs = new ofstream(filename, ios::out | ios::app);
-	if(label_en == true)
+	if(label_en == true && printBW_en == false)
 		*ofs << "UpperBounded #rows, BI, UpperBounded #requests, Refresh Overhead (%), MemUtilisation (%)" << endl;
+	else if(label_en == true && printBW_en == true)
+		*ofs << "BI, UpperBounded #requests, Refresh Overhead (%), Bandwidth (MiB/s)" << endl;
 }
 
 void ExportResult::write_oneCase(eval_metrics *res)
@@ -51,3 +55,11 @@ void ExportResult::write_oneCase(eval_metrics *res)
 	//ofs -> close();
 }
 
+void ExportResult::write_oneCaseBW(eval_metrics *res)
+{
+	*ofs << res -> bi    	         << ","
+	     << res -> bounded_rqst      << ","
+	     << res -> refresh_overhead  << ","
+	     << res -> bandwidth	 << endl;
+	//ofs -> close();
+}
